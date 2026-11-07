@@ -1,0 +1,33 @@
+--- a/src/modules/hyprland/backend.cpp
++++ b/src/modules/hyprland/backend.cpp
+@@ -1,2 +1,30 @@
+ std::string IPC::getSocket1Reply(const std::string& rq) {
++  // Waybar 0.15 sends legacy dispatches; this session uses Hyprland's Lua provider.
++  const std::string workspace = "dispatch workspace ";
++  const std::string currentMonitor = "dispatch focusworkspaceoncurrentmonitor ";
++  const std::string special = "dispatch togglespecialworkspace";
++  auto quoteLua = [](const std::string& value) {
++    std::string quoted = "\"";
++    for (char c : value) {
++      if (c == '\\' || c == '"') quoted += '\\';
++      quoted += c;
++    }
++    return quoted + "\"";
++  };
++  if (rq.starts_with(workspace)) {
++    return getSocket1Reply("dispatch hl.dsp.focus({ workspace = " +
++                           quoteLua(rq.substr(workspace.size())) + " })");
++  }
++  if (rq.starts_with(currentMonitor)) {
++    return getSocket1Reply("dispatch hl.dsp.focus({ on_current_monitor = true, workspace = " +
++                           quoteLua(rq.substr(currentMonitor.size())) + " })");
++  }
++  if (rq == special) {
++    return getSocket1Reply("dispatch hl.dsp.workspace.toggle_special()");
++  }
++  if (rq.starts_with(special + " ")) {
++    return getSocket1Reply("dispatch hl.dsp.workspace.toggle_special(" +
++                           quoteLua(rq.substr(special.size() + 1)) + ")");
++  }
++
+   // basically hyprctl

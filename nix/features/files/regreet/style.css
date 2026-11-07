@@ -1,0 +1,56 @@
+/* Keep the greeter quiet and readable, without an image or animated background. */
+window {
+  background-image: linear-gradient(135deg, #101318, #1b222b);
+  color: #e5e9ef;
+}
+
+frame.background {
+  background-color: #20262e;
+  border: 1px solid #39424e;
+  border-radius: 14px;
+}
+
+/* ReGreet already centers this grid. Widen only the login panel, not the clock. */
+window > overlay > frame.background > grid {
+  min-width: 600px;
+  padding: 20px;
+}
+
+entry {
+  min-height: 38px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background-color: #131920;
+  border: 1px solid #414c5a;
+}
+
+entry:focus {
+  border-color: #a9bdd0;
+  box-shadow: 0 0 0 1px #a9bdd0;
+}
+
+button {
+  min-height: 34px;
+  padding: 8px 14px;
+  border-radius: 8px;
+}
+
+button.suggested-action {
+  background-image: none;
+  background-color: #d5dfe8;
+  color: #17202a;
+  border: 1px solid #d5dfe8;
+  font-weight: 600;
+}
+
+button.suggested-action:hover {
+  background-color: #edf2f7;
+}
+
+/* Power controls remain recognizable but don't dominate the login form. */
+button.destructive-action {
+  background-image: none;
+  background-color: #303842;
+  color: #e5e9ef;
+  border: 1px solid #4a5664;
+}

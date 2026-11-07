@@ -1,0 +1,187 @@
+@define-color foreground #cdd6f4;
+@define-color background #181824;
+@define-color red #f7768e;
+@define-color ylw #e0af68;
+@define-color blu #7aa2f7;
+@define-color mag #ad8ee6;
+@define-color cyn #0db9d7;
+
+* {
+  /* background-color: @background; */
+  color: @foreground;
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+  font-family: 'JetBrainsMono Nerd Font';
+  font-size: 16px;
+  font-weight: bold;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+window#waybar {
+  background-color: @background;
+  color: @foreground;
+}
+
+/* .modules-left, */
+/* .modules-right { */
+/*   margin-left: 8px; */
+/* } */
+
+#custom-nixos {
+  min-width: 20px;
+  padding: 0 8px;
+  margin-left: 8px;
+}
+
+#custom-dunst {
+  min-width: 20px;
+  padding: 0 8px;
+}
+
+#workspaces button {
+  min-width: 10px;
+  padding: 0 8px;
+  margin: 0 1.5px;
+  color: @cyn;
+  background: transparent;
+  border-bottom: 3px solid transparent;
+}
+
+#workspaces button.empty {
+  opacity: 0.3;
+  border-bottom: 0;
+}
+
+#workspaces button.active {
+  color: @cyn;
+  border-bottom: 3px solid @mag;
+}
+
+#workspaces button.urgent {
+  background: @red;
+}
+
+#pulseaudio,
+#cpu,
+#idle_inhibitor,
+#systemd-failed-units,
+#power-profiles-daemon,
+#battery,
+#network,
+#bluetooth {
+  min-width: 12px;
+  margin: 0 12px;
+}
+
+#memory,
+#temperature,
+#disk {
+  min-width: 20px;
+  padding: 0 8px;
+}
+
+.system-monitor-item {
+  margin: 0 8px;
+}
+
+#idle_inhibitor.activated {
+  color: @cyn;
+}
+
+#systemd-failed-units,
+#memory.critical,
+#temperature.critical,
+#disk.critical {
+  color: @red;
+}
+
+#memory.warning,
+#temperature.warning,
+#disk.warning {
+  color: @ylw;
+}
+
+#battery {
+  margin-right: 16px;
+}
+
+#pulseaudio-slider {
+  padding: 0;
+  margin: 0;
+}
+
+#pulseaudio-slider slider {
+  min-height: 0px;
+  min-width: 0px;
+  opacity: 0;
+  background-image: none;
+  border: none;
+  box-shadow: none;
+}
+
+#pulseaudio-slider trough {
+  min-height: 10px;
+  min-width: 80px;
+  border-radius: 5px;
+  background: black;
+}
+
+#pulseaudio-slider highlight {
+  min-width: 10px;
+  border-radius: 5px;
+  background: @foreground;
+}
+
+#pulseaudio-slider.muted highlight {
+    background-color: @ylw;
+}
+
+#battery.warning {
+  color: @ylw;
+}
+
+#battery.critical {
+  color: @red;
+}
+
+#tray {
+  margin-right: 16px;
+}
+
+#network.disconnected {
+  color: @red;
+}
+
+#custom-expand-icon {
+  margin-right: 18px;
+}
+
+#clock,
+#custom-weather {
+  padding: 0 8px;
+}
+
+#privacy {
+  margin-right: 8px;
+}
+
+tooltip {
+  padding: 2px;
+}
+
+.hidden {
+  opacity: 0;
+}
+
+menu {
+  border-radius: 15px;
+  background: #161320;
+  color: @ylw;
+  /* color: #B5E8E0; */
+}
+
+menuitem {
+  border-radius: 15px;
+}

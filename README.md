@@ -1,0 +1,400 @@
+# NixOS and nix-darwin configuration
+
+## Layout
+
+- `flake.nix`: inputs and the `import-tree` entry point.
+- `modules/features/`: feature-oriented flake-parts modules. System and Home
+  Manager definitions for the same feature live together; assets live in `files/`.
+- `modules/profiles/`: collections of features and shared system policy.
+- `modules/users/rms.nix`: Linux account declaration (groups, shell, SSH keys).
+- `modules/hosts/rms-fw/`: Framework system, home profile, hardware, disks, and VM overrides.
+- `modules/hosts/rms-mbp/`: Apple Silicon Mac system and Home Manager profile.
+
+Each host's `default.nix` connects `home-manager.users.rms` to its own
+`home.nix` (`homeModules.rmsFw` or `homeModules.rmsMbp`). Those home profiles
+compose shared feature modules and their host-specific sesh lists.
+
+Every `.nix` file under `modules/` is auto-imported as a **flake-parts module**,
+not as a NixOS or Home Manager module. Defining a named module does not enable it:
+select it through the host/user import lists. Existing `nixosModules` and
+`homeModules` exports are retained.
+
+The Home Manager option `dotfiles.directory` defaults to
+`${home.homeDirectory}/dotfiles`. These editable, out-of-store files are not
+reproducible from this repository alone. Both host home profiles import
+`homeModules.configLinks` for Neovim and Ghostty; override `dotfiles.directory`
+in a host profile if its checkout lives elsewhere. Application installation
+remains platform-specific.
+
+## Hardware identifiers
+
+The Framework disk configuration uses `/dev/disk/by-path/pci-0000:02:00.0-nvme-1`
+instead of a drive serial number. It identifies the internal NVMe connection;
+verify its target before running Disko, especially after hardware or firmware
+changes. Never assume a changed path still identifies the disk you intend to erase.
+
+The Unicorne keyboard uses the udev alias `/dev/input/boardsource-unicorne`.
+The rule in `modules/features/keyboard.nix` matches public vendor/product IDs and
+the main keyboard interface, not a serial number or USB topology, so it works
+across USB ports and docks. The alias supports one matching Unicorne at a time;
+two identical keyboards would need a different selection strategy. The built-in
+keyboard keeps its existing platform path.
+
+## Check changes without activating them
+
+```sh
+# Make new files visible to Git-backed flake evaluation; this doesn't commit them.
+git add -N flake.nix modules README.md .gitignore
+
+# Format Nix files, then evaluate all checks without building them.
+nix fmt
+nix flake check --no-build
+
+# Build the laptop configuration, without switching to it.
+nix build .#nixosConfigurations.rms-fw.config.system.build.toplevel
+```
+
+`nix flake check` without `--no-build` builds formatting, system, Home Manager,
+and VM checks. Successful evaluation alone does not prove a build or boot works.
+
+## Test in a VM
+
+```sh
+# Build a QEMU runner; no sudo, activation, or real disk partitioning.
+nix build .#nixosConfigurations.rms-fw.config.system.build.vm -o result-vm
+
+# Launch from the repo root so the VM disk has a predictable location.
+./result-vm/bin/run-rms-fw-vm-vm
+```
+
+The script name follows the VM hostname (`rms-fw-vm`) plus `-vm`. Log in as
+**rms**, password **vm**, and select Hyprland at the greeter. Sudo is passwordless
+inside the VM only. Shut down the VM, rebuild, and rerun to test another change.
+
+The guest has 4 CPUs, 4 GiB RAM, a 20 GiB virtual disk, and a virtual GPU. Its
+`rms-fw-vm.qcow2` disk persists between launches: with the VM stopped, delete
+that image to reset the guest. NixOS's standard runner shares the host Nix store
+read-only, but not your home directory. It uses user-mode networking without
+inbound port forwards. This is a config test environment, not a sandbox for
+hostile code.
+
+VM-only overrides disable fingerprint/lid scripts, hardware maintenance,
+Bluetooth, nested libvirt, SSH serving, and Tailscale/Rex serving. Dotfile symlinks
+are disabled because the host checkout is not shared. Hardware-specific behavior
+and authenticated applications still need testing on the laptop. Wayland graphics
+in QEMU can behave differently from the real AMD GPU.
+
+Don't use `build-vm-with-bootloader` to test this setup: the normal VM build is
+intended to test configuration and desktop behavior, not the physical disk layout.
+
+
+### ReGreet styling and monitor layout
+
+The laptop and VM use the same ReGreet configuration in
+`modules/features/greeter.nix`, with CSS in
+`modules/features/files/regreet/style.css`: a neutral charcoal background,
+wider centered login panel, and readable controls. The experimental SDDM themes
+have been removed. `nix build .#vm -o result-vm` is a short alias for the VM build.
+
+Cage now uses `-m last`, as recommended by ReGreet. Its default `extend` mode
+centers the application over the combined monitor canvas, which can leave the
+form off-center on an external display when the laptop panel is still enabled.
+The `greeter` check exercises both modes with two virtual outputs and checks
+that the host and VM keep the same output policy and login PAM integration.
+
+**Important:** `last` means the last connected/enumerated output, not necessarily
+an external display. It handles connection/disconnection but is not lid-aware.
+Test cold boot and restart with the real dock and lid closed before switching.
+If firmware/DRM enumeration selects the closed internal panel, deterministic
+lid-aware output selection will need a compositor policy rather than more CSS.
+The VM cannot validate your physical dock's enumeration order.
+
+Authentication is unchanged: greetd uses the `login` PAM stack, including the
+laptop's existing fingerprint configuration. ReGreet starts authentication after
+Login and displays PAM instructions. The reader remains disabled by the existing
+lid handler when closed. The VM has no reader and continues to use `rms` / `vm`.
+Styling changes are shared with the laptop configuration, but building/testing
+them does not activate them on the running system.
+
+### Quickshell bar prototype (VM only)
+
+The VM now replaces Waybar with a custom Quickshell bar. The physical laptop
+still uses Waybar. This is a faithful-recreation prototype, not yet a claim of
+full feature parity. QML lives in `modules/features/files/quickshell/`; the
+optional Home Manager module and session service live in
+`modules/features/quickshell.nix`.
+
+```sh
+# Build without switching the host, then launch the test desktop.
+nix build .#vm -o result-vm
+./result-vm/bin/run-rms-fw-vm-vm
+
+# Inside the guest: inspect or restart the bar.
+systemctl --user status quickshell
+journalctl --user -u quickshell -b
+systemctl --user restart quickshell
+```
+
+Log in as **rms / vm**. The old standard test disk was removed before this
+prototype; the runner creates a fresh disk on its next launch. The separately
+named lavender disk is not used or removed. Keep the VM stopped when rebuilding
+and relaunching. Rebuilds retain the guest disk but update its system closure.
+
+Test workspace clicks, multi-monitor layout, tray menus, audio controls, the
+power menu, notifications, and absence of duplicate bars. Battery, Bluetooth,
+Wi-Fi, physical sensors, and docking need a later laptop test. Weather contacts
+wttr.in and depends on guest network access. The bar intentionally retains Dunst
+and Hyprlock rather than replacing the notification daemon or lock screen.
+
+To return the VM to Waybar, remove the Quickshell import and the two Waybar
+`mkForce false` overrides in `modules/hosts/rms-fw/vm.nix` (and adjust the
+`quickshell-isolation` check). No host activation is needed for either version.
+
+Current prototype includes workspaces, clock/calendar, weather (when space permits),
+Dunst pause, expandable tray, network/Bluetooth launchers, PipeWire audio,
+timed idle inhibition, btop launcher, power profiles, UPower battery, and power
+menu. Not yet ported: privacy indicators, failed-unit reporting, the detailed
+system-metrics drawer, network throughput/signal, and Bluetooth connection count.
+
+Validation: the VM build, flake evaluation, formatting, and host/VM isolation
+check passed. A fresh guest booted through ReGreet into Hyprland, started the bar
+automatically, switched to workspace 2 by clicking, and opened the power menu
+and calendar outside the panel. Power actions were not executed. Audio/tray
+interaction and hardware-specific behaviour still require manual testing.
+
+## OpenCode web UI over Tailscale
+
+`modules/features/opencode-server.nix` runs OpenCode V2 as `rms` at
+`127.0.0.1:4096`, using the existing home directory, provider credentials, and
+configuration. A **separate** userspace Tailscale daemon gives it its own node
+identity without changing `rms-fw` or its existing Tailscale connection. Neither
+HTTP nor HTTPS needs a host firewall opening; this does not enable Funnel.
+
+After building/checking the configuration, activate it and enroll the new node:
+
+```sh
+# Activate on the laptop (not in the test VM).
+sudo nixos-rebuild switch --flake .#rms-fw
+
+# Follow the login URL; state persists across boots. No auth key goes in Nix.
+sudo tailscale --socket=/run/tailscale-opencode/tailscaled.sock up \
+  --hostname=opencode --accept-dns=false --accept-routes=false
+
+# Stop automatic retries while approving HTTPS interactively.
+sudo systemctl stop opencode-serve
+# Enable/approve HTTPS when prompted, then press Ctrl+C after it starts serving.
+sudo tailscale --socket=/run/tailscale-opencode/tailscaled.sock serve \
+  --https=443 http://127.0.0.1:4096
+sudo systemctl start opencode-serve
+```
+
+Enable MagicDNS and HTTPS certificates in the Tailscale admin console if they
+aren't enabled already. With the node name `opencode` available in the
+`tailscalename.ts.net` tailnet, open **https://opencode.tailscalename.ts.net** from a
+Tailscale-connected device. If another node already owns that name, resolve the
+collision in the admin console. The new node is subject to your tailnet ACLs;
+restrict TCP 443 to your own identity/devices. HTTPS certificate names are public
+in certificate transparency logs, but the service itself remains tailnet-only.
+
+OpenCode additionally requires authentication. Retrieve its generated password
+locally (never commit it); the Basic-auth username, if requested, is `opencode`:
+
+```sh
+# Password persists across service restarts, stored mode 0600 outside the Nix store.
+sudo -u rms cat /var/lib/opencode-server/password
+
+# Optional: connect the terminal client to this same server.
+OPENCODE_PASSWORD="$(cat /var/lib/opencode-server/password)" \
+  opencode --server http://127.0.0.1:4096
+
+# Inspect the three independent services.
+systemctl status opencode-server tailscale-opencode opencode-serve
+```
+
+The normal CLI's managed background service is separate. This server runs with
+`rms`'s filesystem and command-execution privileges, so only grant access to
+trusted users. Shell-only environment variables and unlocked interactive secret
+stores aren't automatically inherited by the system service. Provider credentials
+must be available to the server user. The server and dedicated Tailscale daemon
+are both disabled in `build-vm`; closing/suspending the laptop also makes the web
+UI unavailable.
+
+## MacBook: rms-mbp
+
+`modules/hosts/rms-mbp/default.nix` assembles nix-darwin, Home Manager,
+mac-app-util, and nix-homebrew. `system.nix` preserves the supplied macOS defaults,
+Touch ID for sudo, UID 501, and `system.stateVersion = 5`.
+`home.nix` preserves `home.stateVersion = "25.05"` and the editable dotfile links;
+`modules/features/cli.nix` configures the shared CLI;
+`modules/features/mac-cli-packages.nix` adds the Mac's package selections.
+`modules/features/mac-applications.nix` owns Aerospace, IINA, and VS Code via
+Home Manager, including mac-app-util integration for user applications. Its
+Darwin module also owns Homebrew taps, brews, and casks; the host keeps
+nix-homebrew installation and integration settings.
+The Linux desktop profile is deliberately not imported on the Mac.
+
+On the Mac, from a checkout of this repository:
+
+```sh
+# Build without changing the running Mac first; inspect any warnings.
+darwin-rebuild build --flake .#rms-mbp
+
+# Activate only after the build succeeds and the configuration is reviewed.
+sudo darwin-rebuild switch --flake .#rms-mbp
+```
+
+Keep the dotfiles checkout at `/Users/rms/dotfiles`: the supplied aerospace,
+neovim, Ghostty, and nix-darwin links remain out-of-store. Tmux and sesh are
+managed directly by Home Manager. Keep this repository at `~/nix-config`.
+The `.config/nix-darwin` link still targets `dotfiles/nix-darwin`; rebuild using
+`--flake` pointing at this repository, not an old flake in that linked directory.
+Back up unmanaged dotfiles before the first Home Manager activation if they
+conflict with the declared links.
+
+The main Mac packages now use this repository's locked `nixpkgs` and Home Manager
+inputs. This is a package-version change relative to the old Mac flake's lock,
+which wasn't supplied. Homebrew installation and cask availability need checking
+on the Mac; a Linux evaluation cannot validate them or run macOS activation.
+`checks.rms-mbp-evaluation` evaluates the Mac system and Home Manager derivations
+on Linux without trying to build them. The root `systems` list remains Linux-only
+for the existing platform-specific `perSystem` packages; it does not restrict
+`darwinConfigurations.rms-mbp`.
+
+## Shared CLI configuration
+
+Both hosts import `homeModules.cli` from `modules/features/cli.nix`. It owns
+portable CLI program settings, common aliases, `EDITOR`, and `PAGER`.
+Aliases and variables use Home Manager's `home.shellAliases` and
+`home.sessionVariables`, so Fish inherits them directly rather than copying Zsh
+configuration.
+
+CLI behavior now uses the Linux setup as the baseline on both platforms:
+Atuin and its history bindings, Git identity/SSH signing, GitHub extensions,
+fzf behavior, gh-dash bindings, the worktree helper, devenv hook, and Zsh/sesh
+startup are all defined once in `cli.nix`. The Mac profile separately imports
+`homeModules.macCliPackages` from `mac-cli-packages.nix` for its package selections.
+That module now contains only the Mac's Docker/Colima backend, native-process
+compatibility bundle, and 1Password CLI integration exception. OS-specific desktop settings and the Mac's external dotfile
+links are not changed by this alignment.
+
+The stale Mac git-spice completion hook, REX PATH override, `azs`/`w` aliases,
+and fzf/GitHub overrides have been removed. The `gs` alias means `gh stack` on
+both machines; the Mac's installed `git-spice` is still available by its full name.
+The gh-dash PR binding is a list, matching the application's configuration schema.
+
+**Before committing on the Mac:** shared Git settings enable SSH signing using
+`~/.ssh/id_ed25519.pub`. Ensure that Mac's matching private key is available
+locally or through its SSH agent. Keys are not copied between machines.
+
+`checks.cli` checks Linux/Mac parity, Fish/Zsh alias isolation, and the generated
+Fish environment. The Mac configuration is evaluated on Linux, but Mac binaries
+and activation still need testing on the Mac.
+
+
+## Sharing follow-ups
+
+Keep this queue here so it survives individual development sessions:
+
+- [x] CLI package selections: shared portable tools, with module-owned binaries
+  deduplicated and container/process/1Password exceptions kept platform-local.
+- [x] Tmux and sesh: shared behavior, per-host sessions, and platform-specific
+  clipboard commands (macOS pbcopy / Linux Wayland wl-copy).
+- [x] Starship: shared prompt settings expressed directly in Nix/Home Manager.
+- [x] Neovim and Ghostty links: shared `configLinks` declarations using `home.homeDirectory`.
+- [x] Nix policy: shared experimental features and garbage-collection intent,
+  adapting platform-specific scheduling options.
+
+Hardware, desktop environments, Homebrew, macOS defaults, home paths, and existing
+state versions remain host/platform-specific.
+
+### Shared Starship prompt
+
+Edit `programs.starship.settings` directly in `modules/features/starship.nix`
+to change both prompts. Home Manager generates the TOML and validates it against
+the schema supplied by the configured Starship package. There is no separate
+versioned TOML file or external Starship symlink. The original dotfiles file is
+left untouched, but is no longer a source for either managed profile.
+
+The prompt retains the existing arrows, Git status counts/colors, automatic
+language detection, and Docker/Kubernetes context. Improvements include brighter
+untracked-file counts, divergence counts, abbreviated long paths, omission of
+package-version clutter, and command durations for commands taking at least
+three seconds. Kubernetes context remains visible when configured; it is not
+restricted to particular project directories.
+
+Home Manager manages Zsh integration on both machines and Fish on Linux. The
+`starship` check compares generated TOML with the Nix settings and exercises real
+prompt rendering: success/error characters, command durations, Git divergence,
+stash counts, path truncation, and package visibility. The Mac configuration is
+evaluated; its actual shell still needs testing on the Mac.
+
+
+### Shared CLI package ownership
+
+`modules/features/cli.nix` owns the portable developer-tool selection for both
+hosts: editors/language servers, Nix tooling, Cargo, Azurite, Git tooling,
+archives/YAML tools, Ollama, and terminal/session utilities. These are user-profile
+packages, not Linux system-global installs. Enabled Home Manager programs install
+their own binaries; do not repeat them in plain `home.packages` lists.
+
+Tmux and sesh are enabled by the shared CLI profile. Lazygit still uses a fallback
+package when its Home Manager module is disabled on the Mac. Theme runtime tools
+are provided by the theme derivation rather than added to the user's package bag.
+
+Platform exceptions remain explicit:
+
+- Mac Docker CLI and Colima stay in `mac-cli-packages.nix`. Linux keeps Podman's
+  docker-compatible command; this change does not enable Docker or a new socket.
+- Linux's core system owns process tools. The Mac keeps nixpkgs' Darwin `procps`
+  compatibility bundle; it is not Linux procps-ng and does not promise GNU flags.
+- Linux's dedicated 1Password modules own CLI/GUI packages and integration.
+  The Mac keeps its own CLI package alongside the existing app installation.
+
+The shared Ollama selection installs its CLI/default runtime only. It does not
+start a daemon, download models, or enable CUDA/ROCm. GPU/server choices remain
+host-specific. Newly shared Mac developer tools also become available on Linux;
+Linux's Nix/editor/review tools become available on the Mac.
+
+`checks.cli-packages` verifies presence on both platforms, unique direct package
+ownership, and the container/configuration exceptions. Mac checks evaluate the
+configuration without trying to build Darwin packages on Linux.
+
+
+### Shared tmux and client-specific sesh
+
+`modules/features/tmux.nix` owns the common tmux configuration; clipboard copying
+uses `/usr/bin/pbcopy` on macOS and Nix's `wl-copy` on Linux. Prefix is `Ctrl-a`:
+`o` selects a sesh session, `L` returns to the last session, and `g` opens lazygit.
+The theme is pinned to an immutable revision, uses Nix runtime utilities instead
+of Homebrew discovery, and never automatically fetches Git remotes. Optional
+web-Git and music widgets are disabled.
+
+`modules/features/sesh.nix` owns integration, not paths. Edit each client's list in:
+
+- Linux: `modules/hosts/rms-fw/sesh.nix` (`~/c`, `~/utils/dbui`, `~/docs/notes`).
+- Mac: `modules/hosts/rms-mbp/sesh.nix` (`~/code`, `~/tools/dbui`).
+
+Both derive absolute paths from `home.homeDirectory`. The Mac preserves its
+existing session list; tmux, sesh, and nix-darwin editing sessions now open source
+under `~/nix-config`, not generated read-only files. Other dotfiles sessions remain
+unchanged. Before first activation on the Mac, back up/move existing
+`~/.config/tmux` and `~/.config/sesh` links or directories if Home Manager reports
+conflicts; do not edit generated files or delete the original dotfiles checkout.
+
+`checks.tmux-sesh` checks client paths, clipboard selection, generated sesh TOML,
+and the Linux tmux configuration using an isolated temporary server. Darwin is
+evaluated here; its runtime clipboard behavior must be tested on the Mac.
+
+
+### Shared Nix policy
+
+`modules/features/nix.nix` provides `nixosModules.nixPolicy` and
+`darwinModules.nixPolicy`. Both enable `nix-command`/`flakes` and automatic weekly
+GC with `--delete-older-than 30d`. Linux imports it through `profiles/base.nix`
+and retains its persistent systemd timer; the Mac imports it in its system
+profile and uses launchd on Sundays at 03:15 local time. This enables scheduled
+GC on the Mac after activation; no collector is run by editing or building here.
+
+GC removes old generations and then unreachable store paths; it does not delete
+project files or active/rooted store paths. Older rollback generations may no
+longer be available. Linux's `persistent` option is not passed to nix-darwin.
