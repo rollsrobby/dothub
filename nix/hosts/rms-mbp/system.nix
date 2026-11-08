@@ -3,7 +3,10 @@
   flake.darwinModules.rmsMbp =
     { pkgs, ... }:
     {
-      imports = [ self.darwinModules.nixPolicy ];
+      imports = [
+        self.darwinModules.nixPolicy
+        self.nixosModules.homeManager
+      ];
 
       system.primaryUser = "rms";
       nixpkgs.hostPlatform = "aarch64-darwin";
