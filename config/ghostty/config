@@ -1,35 +1,12 @@
-# font-family = MonaspiceNe NFM
 font-family = GeistMono Nerd Font Mono
 font-size = 16
 
 theme = TokyoNight
-# theme = TokyoNight Storm
-# theme = gruvbox-material
 
 mouse-hide-while-typing = true
-# macos-option-as-alt = true
-# macos-window-shadow = false
-# macos-titlebar-style = tabs
-# macos-non-native-fullscreen = true
-
-# window-padding-x = 10,0
-
-# keybind = ctrl+h=goto_split:left
-# keybind = ctrl+j=goto_split:bottom
-# keybind = ctrl+k=goto_split:top
-# keybind = ctrl+l=goto_split:right
-
-# keybind = ctrl+s>h=new_split:left
-# keybind = ctrl+s>j=new_split:down
-# keybind = ctrl+s>k=new_split:up
-# keybind = ctrl+s>l=new_split:right
-# keybind = ctrl+s>m=toggle_split_zoom
-
-# keybind = ctrl+s>r=reload_config
-
-# keybind = ctrl+s>n=next_tab
-# keybind = ctrl+s>p=previous_tab
-
-# keybind = ctrl+n=new_window
+macos-option-as-alt = true
+macos-window-shadow = false
+macos-titlebar-style = tabs
+macos-non-native-fullscreen = true
 
 window-save-state = always
