@@ -18,12 +18,9 @@
         sessionPath = [ "$HOME/.dotnet/tools" ];
 
         # Keep editable application configuration in the external dotfiles checkout.
-        # In particular, nix-darwin is linked as data, not imported as a module.
         file = {
           ".config/aerospace".source =
-            config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/aerospace";
-          ".config/nix-darwin".source =
-            config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/nix-darwin";
+            config.lib.file.mkOutOfStoreSymlink "${config.dotfiles.directory}/aerospace";
         };
       };
 

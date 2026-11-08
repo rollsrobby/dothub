@@ -4,7 +4,7 @@
     {
       options.dotfiles.directory = lib.mkOption {
         type = lib.types.str;
-        default = "${config.home.homeDirectory}/dotfiles";
+        default = "${config.home.homeDirectory}/dothub/config";
         description = "Absolute path to the editable, out-of-store dotfiles checkout.";
       };
 

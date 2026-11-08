@@ -1,30 +1,51 @@
-# NixOS and nix-darwin configuration
+# dothub
+
+One home for NixOS, nix-darwin, Home Manager, and editable application settings.
 
 ## Layout
 
-- `flake.nix`: inputs and the `import-tree` entry point.
-- `modules/features/`: feature-oriented flake-parts modules. System and Home
+- `flake.nix` and `flake.lock`: inputs, pinned versions, and the `import-tree` entry point.
+- `config/`: native application settings for Neovim, Ghostty, and AeroSpace.
+- `nix/features/`: feature-oriented flake-parts modules. System and Home
   Manager definitions for the same feature live together; assets live in `files/`.
-- `modules/profiles/`: collections of features and shared system policy.
-- `modules/users/rms.nix`: Linux account declaration (groups, shell, SSH keys).
-- `modules/hosts/rms-fw/`: Framework system, home profile, hardware, disks, and VM overrides.
-- `modules/hosts/rms-mbp/`: Apple Silicon Mac system and Home Manager profile.
+- `nix/profiles/`: collections of features and shared system policy.
+- `nix/users/rms.nix`: Linux account declaration (groups, shell, SSH keys).
+- `nix/hosts/rms-fw/`: Framework system, home profile, hardware, disks, and VM overrides.
+- `nix/hosts/rms-mbp/`: Apple Silicon Mac system and Home Manager profile.
 
 Each host's `default.nix` connects `home-manager.users.rms` to its own
 `home.nix` (`homeModules.rmsFw` or `homeModules.rmsMbp`). Those home profiles
 compose shared feature modules and their host-specific sesh lists.
 
-Every `.nix` file under `modules/` is auto-imported as a **flake-parts module**,
+Every `.nix` file under `nix/` is auto-imported as a **flake-parts module**,
 not as a NixOS or Home Manager module. Defining a named module does not enable it:
 select it through the host/user import lists. Existing `nixosModules` and
 `homeModules` exports are retained.
 
-The Home Manager option `dotfiles.directory` defaults to
-`${home.homeDirectory}/dotfiles`. These editable, out-of-store files are not
-reproducible from this repository alone. Both host home profiles import
-`homeModules.configLinks` for Neovim and Ghostty; override `dotfiles.directory`
-in a host profile if its checkout lives elsewhere. Application installation
-remains platform-specific.
+## Editable application configurations
+
+Keep the checkout at `~/dothub` on each host. The Home Manager option
+`dotfiles.directory` defaults to `${home.homeDirectory}/dothub/config` and points
+to this repository's `config/` directory, not a separate dotfiles checkout.
+
+Both host home profiles import `homeModules.configLinks` for Neovim and Ghostty.
+The Mac also links AeroSpace using the same option. Home Manager creates
+out-of-store symlinks: edit the files under `config/` directly, without rebuilding
+for each application-config change. Applications may still need a reload or restart.
+
+If the checkout lives elsewhere, override the absolute config-directory path in
+that host's Home Manager profile:
+
+```nix
+# Point editable application links at this checkout's config directory.
+dotfiles.directory = "${config.home.homeDirectory}/code/dothub/config";
+```
+
+The files are versioned here, but the deployed links use the live checkout rather
+than an immutable Nix-store snapshot. A system rollback does not roll back edits
+to those files, and moving or deleting the checkout breaks the links until they
+are updated. Application installation remains platform-specific. The VM disables
+these links because it does not share the host checkout.
 
 ## Hardware identifiers
 
@@ -34,7 +55,7 @@ verify its target before running Disko, especially after hardware or firmware
 changes. Never assume a changed path still identifies the disk you intend to erase.
 
 The Unicorne keyboard uses the udev alias `/dev/input/boardsource-unicorne`.
-The rule in `modules/features/keyboard.nix` matches public vendor/product IDs and
+The rule in `nix/features/keyboard.nix` matches public vendor/product IDs and
 the main keyboard interface, not a serial number or USB topology, so it works
 across USB ports and docks. The alias supports one matching Unicorne at a time;
 two identical keyboards would need a different selection strategy. The built-in
@@ -42,9 +63,15 @@ keyboard keeps its existing platform path.
 
 ## Check changes without activating them
 
+Keep build outputs (`result`, `result-*`), VM disks (`*.qcow2`), Finder metadata
+(`.DS_Store`), and application backups out of Git; add appropriate `.gitignore`
+rules before importing files or building in the checkout.
+
 ```sh
-# Make new files visible to Git-backed flake evaluation; this doesn't commit them.
-git add -N flake.nix modules README.md .gitignore
+# Review new files before including them; never add secrets or generated state.
+git status --short --untracked-files=all
+# Make reviewed source files visible to flake evaluation without committing them.
+git add -N -- flake.nix nix config README.md
 
 # Format Nix files, then evaluate all checks without building them.
 nix fmt
@@ -91,8 +118,8 @@ intended to test configuration and desktop behavior, not the physical disk layou
 ### ReGreet styling and monitor layout
 
 The laptop and VM use the same ReGreet configuration in
-`modules/features/greeter.nix`, with CSS in
-`modules/features/files/regreet/style.css`: a neutral charcoal background,
+`nix/features/greeter.nix`, with CSS in
+`nix/features/files/regreet/style.css`: a neutral charcoal background,
 wider centered login panel, and readable controls. The experimental SDDM themes
 have been removed. `nix build .#vm -o result-vm` is a short alias for the VM build.
 
@@ -120,9 +147,9 @@ them does not activate them on the running system.
 
 The VM now replaces Waybar with a custom Quickshell bar. The physical laptop
 still uses Waybar. This is a faithful-recreation prototype, not yet a claim of
-full feature parity. QML lives in `modules/features/files/quickshell/`; the
+full feature parity. QML lives in `nix/features/files/quickshell/`; the
 optional Home Manager module and session service live in
-`modules/features/quickshell.nix`.
+`nix/features/quickshell.nix`.
 
 ```sh
 # Build without switching the host, then launch the test desktop.
@@ -147,7 +174,7 @@ wttr.in and depends on guest network access. The bar intentionally retains Dunst
 and Hyprlock rather than replacing the notification daemon or lock screen.
 
 To return the VM to Waybar, remove the Quickshell import and the two Waybar
-`mkForce false` overrides in `modules/hosts/rms-fw/vm.nix` (and adjust the
+`mkForce false` overrides in `nix/hosts/rms-fw/vm.nix` (and adjust the
 `quickshell-isolation` check). No host activation is needed for either version.
 
 Current prototype includes workspaces, clock/calendar, weather (when space permits),
@@ -164,7 +191,7 @@ interaction and hardware-specific behaviour still require manual testing.
 
 ## OpenCode web UI over Tailscale
 
-`modules/features/opencode-server.nix` runs OpenCode V2 as `rms` at
+`nix/features/opencode-server.nix` runs OpenCode V2 as `rms` at
 `127.0.0.1:4096`, using the existing home directory, provider credentials, and
 configuration. A **separate** userspace Tailscale daemon gives it its own node
 identity without changing `rms-fw` or its existing Tailscale connection. Neither
@@ -221,13 +248,13 @@ UI unavailable.
 
 ## MacBook: rms-mbp
 
-`modules/hosts/rms-mbp/default.nix` assembles nix-darwin, Home Manager,
+`nix/hosts/rms-mbp/default.nix` assembles nix-darwin, Home Manager,
 mac-app-util, and nix-homebrew. `system.nix` preserves the supplied macOS defaults,
 Touch ID for sudo, UID 501, and `system.stateVersion = 5`.
 `home.nix` preserves `home.stateVersion = "25.05"` and the editable dotfile links;
-`modules/features/cli.nix` configures the shared CLI;
-`modules/features/mac-cli-packages.nix` adds the Mac's package selections.
-`modules/features/mac-applications.nix` owns Aerospace, IINA, and VS Code via
+`nix/features/cli.nix` configures the shared CLI;
+`nix/features/mac-cli-packages.nix` adds the Mac's package selections.
+`nix/features/mac-applications.nix` owns Aerospace, IINA, and VS Code via
 Home Manager, including mac-app-util integration for user applications. Its
 Darwin module also owns Homebrew taps, brews, and casks; the host keeps
 nix-homebrew installation and integration settings.
@@ -243,11 +270,11 @@ darwin-rebuild build --flake .#rms-mbp
 sudo darwin-rebuild switch --flake .#rms-mbp
 ```
 
-Keep the dotfiles checkout at `/Users/rms/dotfiles`: the supplied aerospace,
-neovim, Ghostty, and nix-darwin links remain out-of-store. Tmux and sesh are
-managed directly by Home Manager. Keep this repository at `~/nix-config`.
-The `.config/nix-darwin` link still targets `dotfiles/nix-darwin`; rebuild using
-`--flake` pointing at this repository, not an old flake in that linked directory.
+Keep this repository at `/Users/rms/dothub` (or override `dotfiles.directory`
+as described above). AeroSpace, Neovim, and Ghostty link to its `config/` directory;
+no separate dotfiles checkout is required. Tmux and sesh are managed directly by
+Home Manager. The legacy `.config/nix-darwin` link is no longer declared; use this
+repository's root flake for both build and switch commands.
 Back up unmanaged dotfiles before the first Home Manager activation if they
 conflict with the declared links.
 
@@ -262,7 +289,7 @@ for the existing platform-specific `perSystem` packages; it does not restrict
 
 ## Shared CLI configuration
 
-Both hosts import `homeModules.cli` from `modules/features/cli.nix`. It owns
+Both hosts import `homeModules.cli` from `nix/features/cli.nix`. It owns
 portable CLI program settings, common aliases, `EDITOR`, and `PAGER`.
 Aliases and variables use Home Manager's `home.shellAliases` and
 `home.sessionVariables`, so Fish inherits them directly rather than copying Zsh
@@ -274,8 +301,9 @@ fzf behavior, gh-dash bindings, the worktree helper, devenv hook, and Zsh/sesh
 startup are all defined once in `cli.nix`. The Mac profile separately imports
 `homeModules.macCliPackages` from `mac-cli-packages.nix` for its package selections.
 That module now contains only the Mac's Docker/Colima backend, native-process
-compatibility bundle, and 1Password CLI integration exception. OS-specific desktop settings and the Mac's external dotfile
-links are not changed by this alignment.
+compatibility bundle, and 1Password CLI integration exception. OS-specific desktop
+settings remain platform-local; editable application settings live under this
+repository's `config/` directory.
 
 The stale Mac git-spice completion hook, REX PATH override, `azs`/`w` aliases,
 and fzf/GitHub overrides have been removed. The `gs` alias means `gh stack` on
@@ -309,7 +337,7 @@ state versions remain host/platform-specific.
 
 ### Shared Starship prompt
 
-Edit `programs.starship.settings` directly in `modules/features/starship.nix`
+Edit `programs.starship.settings` directly in `nix/features/starship.nix`
 to change both prompts. Home Manager generates the TOML and validates it against
 the schema supplied by the configured Starship package. There is no separate
 versioned TOML file or external Starship symlink. The original dotfiles file is
@@ -331,7 +359,7 @@ evaluated; its actual shell still needs testing on the Mac.
 
 ### Shared CLI package ownership
 
-`modules/features/cli.nix` owns the portable developer-tool selection for both
+`nix/features/cli.nix` owns the portable developer-tool selection for both
 hosts: editors/language servers, Nix tooling, Cargo, Azurite, Git tooling,
 archives/YAML tools, Ollama, and terminal/session utilities. These are user-profile
 packages, not Linux system-global installs. Enabled Home Manager programs install
@@ -362,22 +390,22 @@ configuration without trying to build Darwin packages on Linux.
 
 ### Shared tmux and client-specific sesh
 
-`modules/features/tmux.nix` owns the common tmux configuration; clipboard copying
+`nix/features/tmux.nix` owns the common tmux configuration; clipboard copying
 uses `/usr/bin/pbcopy` on macOS and Nix's `wl-copy` on Linux. Prefix is `Ctrl-a`:
 `o` selects a sesh session, `L` returns to the last session, and `g` opens lazygit.
 The theme is pinned to an immutable revision, uses Nix runtime utilities instead
 of Homebrew discovery, and never automatically fetches Git remotes. Optional
 web-Git and music widgets are disabled.
 
-`modules/features/sesh.nix` owns integration, not paths. Edit each client's list in:
+`nix/features/sesh.nix` owns integration, not paths. Edit each client's list in:
 
-- Linux: `modules/hosts/rms-fw/sesh.nix` (`~/c`, `~/utils/dbui`, `~/docs/notes`).
-- Mac: `modules/hosts/rms-mbp/sesh.nix` (`~/code`, `~/tools/dbui`).
+- Linux: `nix/hosts/rms-fw/sesh.nix` (`~/c`, `~/utils/dbui`, `~/docs/notes`).
+- Mac: `nix/hosts/rms-mbp/sesh.nix` (`~/code`, `~/tools/dbui`).
 
-Both derive absolute paths from `home.homeDirectory`. The Mac preserves its
-existing session list; tmux, sesh, and nix-darwin editing sessions now open source
-under `~/nix-config`, not generated read-only files. Other dotfiles sessions remain
-unchanged. Before first activation on the Mac, back up/move existing
+Both derive absolute paths from `home.homeDirectory`. Session entries keep their
+own checkout paths and editor commands; when migrating them, replace old
+`~/nix-config` targets with `~/dothub` and use `nix/` paths for source files.
+Before first activation on the Mac, back up/move existing
 `~/.config/tmux` and `~/.config/sesh` links or directories if Home Manager reports
 conflicts; do not edit generated files or delete the original dotfiles checkout.
 
@@ -388,7 +416,7 @@ evaluated here; its runtime clipboard behavior must be tested on the Mac.
 
 ### Shared Nix policy
 
-`modules/features/nix.nix` provides `nixosModules.nixPolicy` and
+`nix/features/nix.nix` provides `nixosModules.nixPolicy` and
 `darwinModules.nixPolicy`. Both enable `nix-command`/`flakes` and automatic weekly
 GC with `--delete-older-than 30d`. Linux imports it through `profiles/base.nix`
 and retains its persistent systemd timer; the Mac imports it in its system

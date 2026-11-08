@@ -30,9 +30,9 @@
         # Evaluate Darwin links above, but only build Linux derivations here.
         pkgs.runCommand "shared-config-links" { } ''
           test -L ${linux.xdg.configFile.nvim.source}
-          test "$(readlink ${linux.xdg.configFile.nvim.source})" = /home/rms/dotfiles/nvim
+          test "$(readlink ${linux.xdg.configFile.nvim.source})" = /home/rms/dothub/config/nvim
           test -L ${linux.xdg.configFile.ghostty.source}
-          test "$(readlink ${linux.xdg.configFile.ghostty.source})" = /home/rms/dotfiles/ghostty
+          test "$(readlink ${linux.xdg.configFile.ghostty.source})" = /home/rms/dothub/config/ghostty
           touch "$out"
         '';
     };
