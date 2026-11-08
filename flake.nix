@@ -43,12 +43,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hunk = {
-      url = "github:modem-dev/hunk";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.bun2nix.inputs.systems.follows = "systems";
-    };
-
     openlogi = {
       url = "github:AprilNEA/OpenLogi?dir=packaging";
       inputs.nixpkgs.follows = "nixpkgs";

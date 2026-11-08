@@ -19,7 +19,6 @@
       self.homeModules.configLinks
       self.homeModules.ssh
       self.homeModules.cursor
-      self.homeModules.hunk
       self.homeModules.rex
       self.homeModules.braveOrigin
       self.homeModules.redisTui

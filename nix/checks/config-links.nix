@@ -24,8 +24,8 @@
     in
     {
       checks.config-links =
-        assert linux.dotfiles.directory == "/home/rms/dotfiles";
-        assert mac.dotfiles.directory == "/Users/rms/dotfiles";
+        assert linux.dotfiles.directory == "/home/rms/dothub/config";
+        assert mac.dotfiles.directory == "/Users/rms/dothub/config";
         assert correctLinks linux && correctLinks mac;
         # Evaluate Darwin links above, but only build Linux derivations here.
         pkgs.runCommand "shared-config-links" { } ''
