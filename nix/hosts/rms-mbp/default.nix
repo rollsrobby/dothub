@@ -15,6 +15,7 @@
           users.rms = self.homeModules.rmsMbp;
           # Create application trampolines for Home Manager GUI packages too.
           sharedModules = [ inputs.mac-app-util.homeManagerModules.default ];
+          backupFileExtension = "backup";
         };
 
         nix-homebrew = {
