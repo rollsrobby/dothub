@@ -21,6 +21,7 @@
       self.homeModules.cursor
       self.homeModules.rex
       self.homeModules.braveOrigin
+      self.homeModules.miseBrowser
       self.homeModules.redisTui
       self.homeModules.azureStorageExplorer
     ];
