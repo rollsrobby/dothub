@@ -9,6 +9,7 @@
         self.homeModules.configLinks
         self.homeModules.macCliPackages
         self.homeModules.macApplications
+        self.homeModules.fish
       ];
 
       home = {

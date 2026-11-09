@@ -62,6 +62,7 @@
       users.users.rms = {
         home = "/Users/rms";
         uid = 501;
+        shell = pkgs.fish;
       };
       users.knownUsers = [ "rms" ];
     };
