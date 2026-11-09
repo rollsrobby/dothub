@@ -55,13 +55,20 @@ return {
     local log_dir = vim.fs.joinpath(vim.fn.stdpath("state"), "roslyn_ls", "logs")
     vim.fn.mkdir(log_dir, "p")
     vim.lsp.config('roslyn_ls', {
+      root_dir = function(bufnr, on_dir)
+        local root = vim.fs.root(bufnr, function(name)
+          return name:match('%.slnx?$') ~= nil
+        end) or vim.fs.root(bufnr, function(name)
+          return name:match('%.csproj$') ~= nil
+        end)
+        if root then on_dir(root) end -- no root => server doesn't start for this buffer
+      end,
       cmd = {
         'Microsoft.CodeAnalysis.LanguageServer',
-        '--logLevel',
-        'Information',
-        '--extensionLogDirectory',
-        log_dir,
-        '--stdio'
+        '--logLevel', 'Information',
+        '--extensionLogDirectory', log_dir,
+        '--stdio',
+        '--autoLoadProjects',
       },
       on_attach = on_attach,
       capabilities = capabilities
