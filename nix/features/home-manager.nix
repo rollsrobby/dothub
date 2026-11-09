@@ -1,7 +1,7 @@
 { inputs, ... }:
 {
   flake.nixosModules.homeManager =
-    { pkgs, ... }:
+    { ... }:
     {
       imports = [
         inputs.home-manager.nixosModules.default

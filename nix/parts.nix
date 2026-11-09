@@ -3,7 +3,10 @@
   imports = [ inputs.home-manager.flakeModules.home-manager ];
 
   # Only advertise platforms this configuration supports
-  systems = [ "x86_64-linux" ];
+  systems = [
+    "x86_64-linux"
+    "aarch64-darwin"
+  ];
 
   perSystem =
     { pkgs, ... }:
