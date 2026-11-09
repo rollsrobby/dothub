@@ -59,6 +59,7 @@
       # Preserve the Mac's existing compatibility version during migration.
       system.stateVersion = 5;
 
+      programs.fish.enable = true;
       users.users.rms = {
         home = "/Users/rms";
         uid = 501;
