@@ -5,7 +5,6 @@
     {
       imports = [
         self.darwinModules.nixPolicy
-        self.nixosModules.homeManager
       ];
 
       system.primaryUser = "rms";
