@@ -1,0 +1,10 @@
+--- a/src/modules/systemd_failed_units.cpp
++++ b/src/modules/systemd_failed_units.cpp
+@@ -131,7 +131,6 @@
+ }
+ 
+ auto SystemdFailedUnits::update() -> void {
+-  if (last_status == overall_state) return;
+ 
+   // Hide if needed.
+   if (overall_state == "ok" && hide_on_ok) {

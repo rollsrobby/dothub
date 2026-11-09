@@ -12,6 +12,12 @@
       pavucontrol = "${pkgs.pavucontrol}/bin/pavucontrol";
       wpctl = "${pkgs.wireplumber}/bin/wpctl";
       hyprshutdown = "${pkgs.hyprshutdown}/bin/hyprshutdown";
+      # Run outside Waybar's cgroup so closing the session cannot kill the power action.
+      powerAction =
+        action: label:
+        "${pkgs.systemd}/bin/systemd-run --user --collect "
+        + "--unit=waybar-power-action -- ${hyprshutdown} --no-fork "
+        + "-t '${label}' --post-cmd '${pkgs.systemd}/bin/systemctl ${action}'";
       powerprofilesctl = "${pkgs.power-profiles-daemon}/bin/powerprofilesctl";
       showFailedUnits = pkgs.writeShellScript "show-failed-units" ''
         set -u
@@ -68,16 +74,11 @@
             "custom/weather"
           ];
           "modules-right" = [
-            "group/tray-expander"
-            "custom/dunst"
-            "systemd-failed-units"
-            "bluetooth"
-            "network"
-            "group/audio"
-            "idle_inhibitor"
             "group/system-monitor"
-            "power-profiles-daemon"
-            "battery"
+            "group/connections"
+            "systemd-failed-units"
+            "custom/dunst"
+            "group/tray-expander"
           ];
 
           "custom/nixos" = {
@@ -86,10 +87,10 @@
             menu = "on-click";
             menu-file = "~/.config/waybar/power_menu.xml";
             menu-actions = {
-              shutdown = "exec ${hyprshutdown} -t 'Shutting down...' --post-cmd 'shutdown -P 0'";
-              reboot = "exec ${hyprshutdown} -t 'Restarting...' --post-cmd 'reboot'";
-              suspend = "systemctl suspend";
-              lock = "pidof hyprlock >/dev/null || ${hyprlock}";
+              shutdown = powerAction "poweroff" "Shutting down...";
+              reboot = powerAction "reboot" "Restarting...";
+              suspend = "${pkgs.systemd}/bin/systemctl suspend";
+              lock = "${pkgs.procps}/bin/pidof hyprlock >/dev/null || ${hyprlock}";
             };
           };
 
@@ -163,7 +164,7 @@
 
           cpu = {
             interval = 5;
-            format = "󰍛";
+            format = "CPU {usage}%";
             tooltip-format = "CPU: {usage}%\nLoad: {load}";
             on-click = "${ghostty} -e ${btop}";
             on-click-right = ghostty;
@@ -171,7 +172,7 @@
 
           memory = {
             interval = 10;
-            format = "";
+            format = "RAM {percentage}%";
             tooltip-format = "Memory: {used:0.1f}/{total:0.1f} GiB ({percentage}%)\nZram: {swapUsed:0.1f}/{swapTotal:0.1f} GiB ({swapPercentage}%)";
             on-click = "${ghostty} -e ${btop}";
             states = {
@@ -180,56 +181,24 @@
             };
           };
 
-          temperature = {
-            hwmon-path-abs = "/sys/devices/pci0000:00/0000:00:18.3/hwmon";
-            input-filename = "temp1_input";
-            interval = 5;
-            format = "{icon}";
-            tooltip-format = "CPU temperature: {temperatureC}°C";
-            format-icons = [
-              ""
-              ""
-              ""
-            ];
-            warning-threshold = 85;
-            critical-threshold = 95;
-            on-click = "${ghostty} -e ${btop}";
-          };
-
-          disk = {
-            path = "/";
-            interval = 30;
-            format = "󰋊";
-            tooltip-format = "Disk: {used}/{total} used ({percentage_used}%)\nFree: {free}";
-            on-click = "${ghostty} -e ${btop}";
-            states = {
-              warning = 80;
-              critical = 90;
-            };
-          };
-
-          "group/audio" = {
+          # Stable controls: scroll audio to adjust volume, click for the mixer.
+          "group/connections" = {
             orientation = "inherit";
-            drawer = {
-              transition-duration = 200;
-            };
             modules = [
+              "network"
+              "bluetooth"
               "pulseaudio"
-              "pulseaudio/slider"
+              "power-profiles-daemon"
+              "battery"
             ];
           };
 
           "group/system-monitor" = {
             orientation = "inherit";
-            drawer = {
-              transition-duration = 300;
-              children-class = "system-monitor-item";
-            };
+            # Keep metrics stationary and clickable; no hover-to-reveal drawer.
             modules = [
               "cpu"
               "memory"
-              "temperature"
-              "disk"
             ];
           };
 
@@ -252,16 +221,6 @@
             on-click = "${ghostty} --title=failed-units -e ${showFailedUnits}";
           };
 
-          "power-profiles-daemon" = {
-            format = "{icon}";
-            tooltip-format = "Power profile: {profile}\nDriver: {driver}";
-            format-icons = {
-              performance = "";
-              balanced = "";
-              "power-saver" = "";
-            };
-          };
-
           clock = {
             format = "{:L%a %b %d %H:%M}";
             tooltip-format = "<tt><small>{calendar}</small></tt>";
@@ -280,8 +239,8 @@
               "󰤥"
               "󰤨"
             ];
-            format-wifi = "{icon}";
-            format-ethernet = "󰀂";
+            format-wifi = "{icon} Wi-Fi";
+            format-ethernet = "󰀂 LAN";
             format-disconnected = "󰤮";
             tooltip-format-wifi = "{essid} ({frequency} GHz)\n⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}";
             tooltip-format-ethernet = "⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}";
@@ -292,11 +251,22 @@
             on-click-right = "${ghostty} -e ${nmtui}";
           };
 
+          # Keep the current profile visible beside the battery's profile menu.
+          "power-profiles-daemon" = {
+            format = "{icon}";
+            tooltip-format = "Power profile: {profile}\nClick to cycle profiles";
+            format-icons = {
+              "power-saver" = "";
+              balanced = "";
+              performance = "";
+            };
+          };
+
           battery = {
-            format = "{capacity}% {icon}";
-            format-discharging = "{icon}";
-            format-charging = "{icon}";
-            format-plugged = "";
+            format = "{icon} {capacity}%";
+            format-discharging = "{icon} {capacity}%";
+            format-charging = "{icon} {capacity}%";
+            format-plugged = " {capacity}%";
             format-icons = {
               charging = [
                 "󰢜"
@@ -323,7 +293,7 @@
                 "󰁹"
               ];
             };
-            format-full = "󰂅";
+            format-full = "󰂅 {capacity}%";
             tooltip-format-discharging = "{power:>1.0f}W↓ {capacity}%";
             tooltip-format-charging = "{power:>1.0f}W↑ {capacity}%";
             interval = 5;
@@ -341,10 +311,17 @@
             };
           };
 
-          bluetooth = {
+          "custom/bluetooth-settings" = {
             format = "";
-            format-off = "󰂲";
-            format-disabled = "󰂲";
+            tooltip-format = "Bluetooth devices";
+            on-click = "${ghostty} --title=bluetui -e ${bluetui}";
+            on-click-right = toggleBluetooth;
+          };
+
+          bluetooth = {
+            format = "";
+            format-off = "";
+            format-disabled = "";
             format-connected = "󰂱";
             format-no-controller = "";
             tooltip-format = "Devices connected: {num_connections}";
@@ -352,14 +329,8 @@
             on-click-right = toggleBluetooth;
           };
 
-          "pulseaudio/slider" = {
-            min = 0;
-            max = 100;
-            orientation = "horizontal";
-          };
-
           pulseaudio = {
-            format = "{icon}";
+            format = "{icon} {volume}%";
             on-click = "${pavucontrol}";
             on-click-right = "${wpctl} set-mute @DEFAULT_AUDIO_SINK@ toggle";
             tooltip-format = "Playing at {volume}%";
@@ -379,23 +350,26 @@
           "group/tray-expander" = {
             orientation = "inherit";
             drawer = {
-              transition-duration = 600;
+              transition-duration = 200;
               children-class = "tray-group-item";
             };
             modules = [
               "custom/expand-icon"
+              "custom/bluetooth-settings"
+              "idle_inhibitor"
               "tray"
             ];
           };
 
           "custom/expand-icon" = {
-            format = "";
-            tooltip = false;
+            format = "󰍜";
+            tooltip-format = "More: Bluetooth, keep-awake and tray";
           };
 
           tray = {
-            icon-size = 12;
-            spacing = 14;
+            icon-size = 16;
+            # CSS gives every app icon the same padded slot as the drawer controls.
+            spacing = 0;
           };
         }
       ];
@@ -406,7 +380,18 @@
       programs.waybar = {
         enable = true;
         package = pkgs.waybar.overrideAttrs (old: {
-          patches = (old.patches or [ ]) ++ [ ./files/waybar/waybar-hyprland-lua.patch ];
+          patches = (old.patches or [ ]) ++ [
+            ./files/waybar/waybar-hyprland-lua.patch
+            ./files/waybar/waybar-systemd-refresh.patch
+          ];
+          # Exercise the patched update method with lightweight GTK/fmt stand-ins.
+          postPatch = (old.postPatch or "") + ''
+            sed -n '/auto SystemdFailedUnits::update() -> void/,$p' \
+              src/modules/systemd_failed_units.cpp > "$TMPDIR/systemd-update.inc"
+            $CXX -std=c++17 -I"$TMPDIR" \
+              ${./files/waybar/tests/systemd-refresh.cpp} -o "$TMPDIR/test-systemd-refresh"
+            "$TMPDIR/test-systemd-refresh"
+          '';
         });
         systemd.enable = true;
         settings = waybarSettings;
