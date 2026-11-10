@@ -23,12 +23,20 @@
       xdg.mimeApps = {
         enable = true;
         defaultApplications = {
-          "text/html" = "brave-origin.desktop";
-          "x-scheme-handler/http" = "brave-origin.desktop";
-          "x-scheme-handler/https" = "brave-origin.desktop";
-          "x-scheme-handler/about" = "brave-origin.desktop";
-          "x-scheme-handler/unknown" = "brave-origin.desktop";
+          "text/html" = "zen.desktop";
+          "x-scheme-handler/http" = "zen.desktop";
+          "x-scheme-handler/https" = "zen.desktop";
+          "x-scheme-handler/about" = "zen.desktop";
+          "x-scheme-handler/unknown" = "zen.desktop";
         };
+        # Keep in case we want to switch back
+        # defaultApplications = {
+        #   "text/html" = "brave-origin.desktop";
+        #   "x-scheme-handler/http" = "brave-origin.desktop";
+        #   "x-scheme-handler/https" = "brave-origin.desktop";
+        #   "x-scheme-handler/about" = "brave-origin.desktop";
+        #   "x-scheme-handler/unknown" = "brave-origin.desktop";
+        # };
       };
 
       services.dunst = {
