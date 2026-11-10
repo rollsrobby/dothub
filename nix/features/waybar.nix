@@ -125,10 +125,6 @@
                 tooltip = true;
                 tooltip-icon-size = 24;
               }
-              {
-                type = "location";
-                icon-name = "location-services-active-symbolic";
-              }
             ];
             ignore-monitor = true;
           };
@@ -222,7 +218,7 @@
           };
 
           clock = {
-            format = "{:L%a %b %d %H:%M}";
+            format = "<span weight='normal'>{0:L%a %b %d}</span>  <b>{0:%H:%M}</b>";
             tooltip-format = "<tt><small>{calendar}</small></tt>";
             calendar = {
               format = {
@@ -477,24 +473,7 @@
         executable = true;
         text = ''
           #!/usr/bin/env bash
-          # Leaving the location empty lets wttr.in locate us by public IP.
-          for i in {1..5}
-          do
-              text=$(curl -s "https://wttr.in/?format=1")
-              if [[ $? == 0 ]]
-              then
-                  text=$(echo "$text" | sed -E "s/\s+/ /g")
-                  tooltip=$(curl -s "https://wttr.in/?format=4")
-                  if [[ $? == 0 ]]
-                  then
-                      tooltip=$(echo "$tooltip" | sed -E "s/\s+/ /g")
-                      echo "{\"text\":\"$text\", \"tooltip\":\"$tooltip\"}"
-                      exit
-                  fi
-              fi
-              sleep 2
-          done
-          echo "{\"text\":\"error\", \"tooltip\":\"error\"}"
+          exec ${pkgs.python3}/bin/python3 ${./files/waybar/weather.py}
         '';
       };
 

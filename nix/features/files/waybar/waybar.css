@@ -43,7 +43,11 @@ window#waybar {
 }
 
 #workspaces button.active {
+  /* Match the tray's tinted treatment using the workspace accent colors. */
   color: @cyn;
+  background-color: alpha(@mag, 0.09);
+  /* background-color: alpha(@mag, 0.16); */
+  border-radius: 6px;
   border-bottom: 3px solid @mag;
 }
 
@@ -132,8 +136,26 @@ window#waybar {
   padding: 0 8px;
 }
 
+/* Privacy is hidden by Waybar when no monitored stream is active. */
 #privacy {
-  margin-right: 8px;
+  margin: 6px 8px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background-color: alpha(@red, 0.14);
+}
+
+#privacy image {
+  color: @red;
+}
+
+#custom-weather {
+  font-size: 14px;
+  font-weight: normal;
+}
+
+#custom-weather.stale,
+#custom-weather.unavailable {
+  color: alpha(@foreground, 0.55);
 }
 
 tooltip {
