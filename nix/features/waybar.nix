@@ -77,6 +77,7 @@
             "group/system-monitor"
             "group/connections"
             "systemd-failed-units"
+            "idle_inhibitor"
             "custom/dunst"
             "group/tray-expander"
           ];
@@ -97,6 +98,8 @@
           "custom/dunst" = {
             exec = "~/.config/waybar/scripts/dunst.sh";
             on-click = "${pkgs.dunst}/bin/dunstctl set-paused toggle";
+            on-click-right = "${pkgs.dunst}/bin/dunstctl history-pop";
+            tooltip-format = "Notifications\nClick: pause/resume\nRight-click: reopen latest notification";
             interval = 1;
           };
 
@@ -290,8 +293,10 @@
               ];
             };
             format-full = "󰂅 {capacity}%";
-            tooltip-format-discharging = "{power:>1.0f}W↓ {capacity}%";
-            tooltip-format-charging = "{power:>1.0f}W↑ {capacity}%";
+            tooltip-format = "Battery: {capacity}% · {timeTo}\nClick to choose a power profile";
+            tooltip-format-discharging = "Discharging: {capacity}%\nEstimated remaining: {time} · {power:0.1f} W\nClick to choose a power profile";
+            tooltip-format-charging = "Charging: {capacity}%\nEstimated time to full: {time} · {power:0.1f} W\nClick to choose a power profile";
+            tooltip-format-full = "Battery: {capacity}% · {timeTo}\nConfigured charge target reached\nClick to choose a power profile";
             interval = 5;
             full-at = 80;
             menu = "on-click";
@@ -348,18 +353,18 @@
             drawer = {
               transition-duration = 200;
               children-class = "tray-group-item";
+              click-to-reveal = true;
             };
             modules = [
               "custom/expand-icon"
               "custom/bluetooth-settings"
-              "idle_inhibitor"
               "tray"
             ];
           };
 
           "custom/expand-icon" = {
             format = "󰍜";
-            tooltip-format = "More: Bluetooth, keep-awake and tray";
+            tooltip-format = "Click to show/hide Bluetooth and tray";
           };
 
           tray = {
