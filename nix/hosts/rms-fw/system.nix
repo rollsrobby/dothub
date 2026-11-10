@@ -87,7 +87,9 @@
       services.logind.settings.Login = {
         HandleLidSwitch = "suspend";
         HandleLidSwitchExternalPower = "suspend";
-        HandleLidSwitchDocked = "ignore";
+        # The session policy inhibits lid handling only while it owns the decision.
+        # Outside that session (or after a crash), closing the lid remains safe.
+        HandleLidSwitchDocked = "suspend";
       };
 
     };

@@ -1,0 +1,16 @@
+--- a/src/core/Hypridle.cpp
++++ b/src/core/Hypridle.cpp
+@@ -364,6 +364,13 @@
+ void CHypridle::onInhibit(bool lock) {
+     m_iInhibitLocks += lock ? 1 : -1;
+ 
++    // A deferred condition must not outlive a new idle inhibitor. On release,
++    // idle notifications are recreated below and start fresh timeout periods.
++    if (lock) {
++        for (auto& listener : m_sWaylandIdleState.listeners)
++            listener.conditionPending = false;
++    }
++
+     if (m_iInhibitLocks < 0) {
+         Debug::log(WARN, "BUG THIS: inhibit locks < 0: {}", m_iInhibitLocks);
+         m_iInhibitLocks = 0;
