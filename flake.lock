@@ -506,10 +506,10 @@
         "nixpkgs": "nixpkgs_7"
       },
       "locked": {
-        "lastModified": 1794283804,
-        "narHash": "sha256-QXXYZw14GkH4Uq3FB+uWxMiigCw8GMst09R+90N9i78=",
+        "lastModified": 1794323808,
+        "narHash": "sha256-qmjIvuQTUuVjurVTx9FDOdET/kOb1Jpaaddlzys2wy4=",
         "type": "tarball",
-        "url": "https://pkgs.superlogical.com/rex/nix/snapshot/0.0.1794283804-gc3af96.tar.gz"
+        "url": "https://pkgs.superlogical.com/rex/nix/snapshot/0.0.1794323808-g757adf.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -712,11 +712,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793356942,
-        "narHash": "sha256-3ddg7v2Ya11zEeQghXELyFwYIpv+nCTm2uVmu3LmvfU=",
+        "lastModified": 1794048739,
+        "narHash": "sha256-soIwkenBdT+xSXv9iARxkGuyrq4/kF1u2vXK811LFUM=",
         "owner": "youwen5",
         "repo": "zen-browser-flake",
-        "rev": "532b9a848c6b96d9f607e8856d1a458bdb7dcf66",
+        "rev": "590d492da41cab84758361ef15d504c966f35474",
         "type": "github"
       },
       "original": {
