@@ -24,7 +24,7 @@
         pavucontrol
         wireplumber
         power-profiles-daemon
-        dunst
+        swaynotificationcenter
       ];
       launch = pkgs.writeShellScript "quickshell-bar" ''
         export PATH=${lib.makeBinPath commands}:$PATH

@@ -1,6 +1,13 @@
 {
   flake.homeModules.session =
-    { pkgs, ... }:
+    { pkgs, lib, ... }:
+    let
+      colors = (import ../../lib/desktop-colors.nix).notifications;
+      colorFormats = import ../../lib/desktop-color-formats.nix { inherit lib; };
+      cssTokens = lib.mapAttrs (_: colorFormats.css) colors // {
+        surfaceRgb = colorFormats.rgb colors.surface;
+      };
+    in
     {
       home.sessionPath = [
         "$HOME/.dotnet/tools"
@@ -39,53 +46,42 @@
         # };
       };
 
-      services.dunst = {
+      # One notification daemon owns both popups and session notification history.
+      services.swaync = {
         enable = true;
-        iconTheme = {
-          package = pkgs.adwaita-icon-theme;
-          name = "Adwaita";
-          size = "32x32";
-        };
         settings = {
-          global = {
-            icon_position = "left";
-            follow = "mouse";
-            width = 360;
-            height = 160;
-            offset = "24x24";
-            origin = "top-right";
-            notification_limit = 8;
-            progress_bar = true;
-            frame_width = 2;
-            frame_color = "#08b4ff";
-            separator_color = "frame";
-            corner_radius = 8;
-            padding = 16;
-            horizontal_padding = 16;
-            gap_size = 8;
-            markup = "full";
-            format = "<b>%s</b>\\n%b";
-          };
-
-          urgency_low = {
-            background = "#111827";
-            foreground = "#d1d5db";
-            timeout = 4;
-          };
-
-          urgency_normal = {
-            background = "#0f172a";
-            foreground = "#e2e8f0";
-            timeout = 6;
-          };
-
-          urgency_critical = {
-            background = "#3f1d2e";
-            foreground = "#f8fafc";
-            frame_color = "#fb7185";
-            timeout = 0;
+          positionX = "right";
+          positionY = "top";
+          layer = "overlay";
+          control-center-layer = "overlay";
+          cssPriority = "user";
+          notification-window-width = 360;
+          control-center-width = 420;
+          control-center-margin-top = 12;
+          control-center-margin-bottom = 12;
+          control-center-margin-right = 12;
+          timeout = 6;
+          timeout-low = 4;
+          timeout-critical = 0;
+          notification-grouping = true;
+          hide-on-clear = false;
+          widgets = [
+            "title"
+            "dnd"
+            "notifications"
+          ];
+          widget-config = {
+            title = {
+              text = "Notifications";
+              clear-all-button = true;
+              button-text = "Clear all";
+            };
+            dnd.text = "Do Not Disturb";
           };
         };
+        style = lib.replaceStrings (map (name: "@${name}@") (
+          builtins.attrNames cssTokens
+        )) (builtins.attrValues cssTokens) (builtins.readFile ./files/swaync/style.css);
       };
     };
 }

@@ -1,3 +1,8 @@
+{ lib, ... }:
+let
+  colors = (import ../../lib/desktop-colors.nix).greeter;
+  colorFormats = import ../../lib/desktop-color-formats.nix { inherit lib; };
+in
 {
   flake.nixosModules.greeter = {
     services.displayManager.regreet = {
@@ -12,7 +17,7 @@
         "last"
       ];
       theme.name = "Adwaita-dark";
-      extraCss = ./files/regreet/style.css;
+      extraCss = colorFormats.gtkDefinitions colors + builtins.readFile ./files/regreet/style.css;
       settings = {
         GTK.application_prefer_dark_theme = true;
         commands = {

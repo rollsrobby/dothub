@@ -1,0 +1,22 @@
+/* Keep upstream layout/accessibility styling; customize its GTK4 theme tokens. */
+:root {
+  --cc-bg: @surface@;
+  --noti-bg: @surfaceRgb@;
+  --noti-bg-alpha: 0.98;
+  --noti-bg-darker: @surfaceDim@;
+  --noti-bg-hover: @surfaceHover@;
+  --noti-bg-focus: @surfaceHover@;
+  --noti-border-color: @accent@;
+  --noti-close-bg: @surfaceHover@;
+  --noti-close-bg-hover: @surfacePressed@;
+  --text-color: @text@;
+  --text-color-disabled: @textMuted@;
+  --bg-selected: @accent@;
+  --border-radius: 8px;
+  --notification-icon-size: 32px;
+}
+
+.notification.critical {
+  background: @dangerSurface@;
+  border-color: @danger@;
+}

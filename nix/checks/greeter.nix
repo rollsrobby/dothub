@@ -39,7 +39,7 @@
             mkdir -p "$HOME"
             python3 ${../features/files/regreet/test-layout.py} \
               ${lib.escapeShellArg (toString host.environment.etc."greetd/regreet.toml".source)} \
-              ${../features/files/regreet/style.css}
+              ${lib.escapeShellArg (toString host.environment.etc."greetd/regreet.css".source)}
             touch "$out"
           '';
     };

@@ -1,9 +1,26 @@
+{ lib, ... }:
+let
+  palette = import ../../lib/desktop-colors.nix;
+  colors = palette.greeter;
+  colorFormats = import ../../lib/desktop-color-formats.nix { inherit lib; };
+  opaque = color: colorFormats.hyprlock color "1.0";
+  label = text: size: y: color: {
+    monitor = "";
+    inherit text;
+    font_family = "Sans";
+    font_size = size;
+    color = opaque color;
+    position = "0, ${toString y}";
+    halign = "center";
+    valign = "center";
+  };
+in
 {
   flake.nixosModules.hyprlock = {
     security.pam.services.hyprlock = { };
   };
 
-  flake.homeModules.hyprlock = {
+  flake.homeModules.hyprlock = { pkgs, ... }: {
     programs.hyprlock = {
       enable = true;
 
@@ -20,12 +37,13 @@
           };
         };
 
+        general.grace = 0;
+
         background = [
           {
             monitor = "";
-            path = "~/walls/nature/a_lake_with_trees_and_clouds.png";
+            path = "~/walls/centered/a_palm_tree_and_cactus_on_a_pink_background.png";
             blur_passes = 2;
-            # color = "rgba(11, 13, 18, 1.0)";
             contrast = 0.8916;
             brightness = 0.8172;
             vibrancy = 0.1696;
@@ -33,61 +51,51 @@
           }
         ];
 
+        shape = [
+          {
+            monitor = "";
+            size = "640, 260";
+            position = "0, -65";
+            halign = "center";
+            valign = "center";
+            rounding = 14;
+            color = opaque colors.surface;
+            border_color = opaque colors.border;
+            border_size = 1;
+          }
+        ];
+
         input-field = [
           {
             monitor = "";
-            size = "260, 46";
-            outline_thickness = 2;
+            size = "400, 52";
+            outline_thickness = 1;
+            rounding = 8;
             dots_spacing = 0.2;
             dots_center = true;
-            outer_color = "rgba(80, 88, 105, 1.0)";
-            inner_color = "rgba(24, 28, 36, 1.0)";
-            font_color = "rgba(234, 236, 242, 1.0)";
-            fade_on_empty = true;
+            outer_color = opaque colors.inputBorder;
+            inner_color = opaque colors.input;
+            font_color = opaque colors.text;
+            check_color = opaque colors.focus;
+            fail_color = opaque palette.lock.danger;
+            capslock_color = opaque colors.focus;
+            font_family = "Sans";
+            fade_on_empty = false;
             placeholder_text = "Password";
-            position = "0, -120";
+            fail_text = "Incorrect password — try again";
+            position = "0, -65";
             halign = "center";
             valign = "center";
           }
         ];
 
         label = [
-          {
-            monitor = "";
-            text = "$TIME";
-            font_size = 72;
-            color = "rgba(234, 236, 242, 1.0)";
-            position = "0, 160";
-            halign = "center";
-            valign = "center";
-          }
-          {
-            monitor = "";
-            text = "$FPRINTPROMPT";
-            font_size = 12;
-            color = "rgba(234, 236, 242, 1.0)";
-            position = "0, -180";
-            halign = "center";
-            valign = "center";
-          }
-          {
-            monitor = "";
-            text = "$FPRINTFAIL";
-            font_size = 12;
-            color = "rgba(224, 86, 86, 1.0)";
-            position = "0, -205";
-            halign = "center";
-            valign = "center";
-          }
-          {
-            monitor = "";
-            text = "Hi, $USER";
-            color = "rgba(216, 222, 233, 0.70)";
-            font_size = 14;
-            position = "0, 10";
-            halign = "center";
-            valign = "center";
-          }
+          (label "$TIME" 72 230 colors.text)
+          (label "cmd[update:60000] ${pkgs.coreutils}/bin/date '+%A, %d %B'" 16 150 colors.focus)
+          (label "Welcome back, $USER" 22 20 colors.text)
+          # Keep both fingerprint lines inside the opaque panel, below the input.
+          (label "$FPRINTPROMPT" 13 (-130) colors.focus)
+          (label "$FPRINTFAIL" 12 (-160) palette.lock.danger)
         ];
       };
     };

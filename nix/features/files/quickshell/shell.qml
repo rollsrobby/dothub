@@ -44,9 +44,9 @@ ShellRoot {
         }
     }
     PollText {
-        id: dunst
+        id: notifications
         interval: 1000
-        command: ["sh", "-c", "\"$HOME/.config/waybar/scripts/dunst.sh\""]
+        command: ["swaync-client", "-c"]
     }
     PollText {
         id: network
@@ -209,10 +209,10 @@ ShellRoot {
                     }
                 }
                 BarButton {
-                    text: dunst.text || ""
+                    text: Number(notifications.text) > 0 ? "󱅫" : ""
                     padding: 8
-                    tooltip: "Toggle notification pause"
-                    onClicked: root.run(["dunstctl", "set-paused", "toggle"])
+                    tooltip: "Open notification history"
+                    onClicked: root.run(["swaync-client", "-t"])
                 }
                 BarButton {
                     visible: bluetooth.text !== ""

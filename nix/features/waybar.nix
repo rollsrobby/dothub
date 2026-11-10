@@ -1,8 +1,14 @@
-{ moduleWithSystem, ... }:
+{ moduleWithSystem, lib, ... }:
 {
   flake.homeModules.waybar = moduleWithSystem (
-    { pkgs, config, ... }:
+    {
+      pkgs,
+      config,
+      ...
+    }:
     let
+      colors = (import ../../lib/desktop-colors.nix).bar;
+      colorFormats = import ../../lib/desktop-color-formats.nix { inherit lib; };
       ghostty = "${pkgs.ghostty}/bin/ghostty";
       btop = "${pkgs.btop}/bin/btop";
       hyprlock = "${pkgs.hyprlock}/bin/hyprlock";
@@ -84,7 +90,7 @@
             "group/connections"
             "systemd-failed-units"
             "idle_inhibitor"
-            "custom/dunst"
+            "custom/notification"
             "group/tray-expander"
           ];
 
@@ -101,12 +107,26 @@
             };
           };
 
-          "custom/dunst" = {
-            exec = "~/.config/waybar/scripts/dunst.sh";
-            on-click = "${pkgs.dunst}/bin/dunstctl set-paused toggle";
-            on-click-right = "${pkgs.dunst}/bin/dunstctl history-pop";
-            tooltip-format = "Notifications\nClick: pause/resume\nRight-click: reopen latest notification";
-            interval = 1;
+          "custom/notification" = {
+            # Subscribe to history/DND changes instead of polling every second.
+            exec = "${pkgs.swaynotificationcenter}/bin/swaync-client -swb";
+            return-type = "json";
+            format = "{icon}";
+            format-icons = {
+              none = "";
+              notification = "󱅫";
+              dnd-none = "";
+              dnd-notification = "";
+              inhibited-none = "";
+              inhibited-notification = "";
+              dnd-inhibited-none = "";
+              dnd-inhibited-notification = "";
+            };
+            on-click = "${pkgs.swaynotificationcenter}/bin/swaync-client -t -sw";
+            on-click-right = "${pkgs.swaynotificationcenter}/bin/swaync-client -d -sw";
+            tooltip-format = "Notifications\nClick: open history\nRight-click: Do Not Disturb";
+            escape = true;
+            restart-interval = 5;
           };
 
           "custom/weather" = {
@@ -231,7 +251,7 @@
             tooltip-format = "<tt><small>{calendar}</small></tt>";
             calendar = {
               format = {
-                today = "<span color='#0db9d7'><b>{}</b></span>";
+                today = "<span color='${colorFormats.css colors.accent}'><b>{}</b></span>";
               };
             };
           };
@@ -376,7 +396,7 @@
         }
       ];
 
-      waybarStyle = builtins.readFile ./files/waybar/waybar.css;
+      waybarStyle = colorFormats.gtkDefinitions colors + builtins.readFile ./files/waybar/waybar.css;
     in
     {
       programs.waybar = {
@@ -458,27 +478,6 @@
             </object>
         </interface>
       '';
-
-      xdg.configFile."waybar/scripts/dunst.sh" = {
-        executable = true;
-        text = ''
-          #!/usr/bin/env bash
-
-          COUNT=$(${pkgs.dunst}/bin/dunstctl count waiting)
-          ENABLED=
-          DISABLED=
-
-          if [ "$COUNT" != 0 ]; then
-            DISABLED=" $COUNT"
-          fi
-
-          if ${pkgs.dunst}/bin/dunstctl is-paused | ${pkgs.gnugrep}/bin/grep -q false; then
-            echo "$ENABLED"
-          else
-            echo "$DISABLED"
-          fi
-        '';
-      };
 
       xdg.configFile."waybar/scripts/get_weather.sh" = {
         executable = true;

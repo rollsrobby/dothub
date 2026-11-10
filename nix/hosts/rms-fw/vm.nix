@@ -41,6 +41,7 @@
           login.fprintAuth = lib.mkForce false;
           sudo.fprintAuth = lib.mkForce false;
           polkit-1.fprintAuth = lib.mkForce false;
+          hyprlock.fprintAuth = lib.mkForce false;
         };
         virtualisation.libvirtd.enable = lib.mkForce false;
 
@@ -50,7 +51,10 @@
         systemd.user.services.tailscale-systray.enable = false;
         home-manager.users.rms = {
           # Test the replacement only here; the laptop still imports Waybar.
-          imports = [ self.homeModules.quickshell ];
+          imports = [
+            self.homeModules.quickshell
+            self.homeModules.vmHyprlock
+          ];
           systemd.user.services.power-profile-session.Install.WantedBy = lib.mkForce [ ];
           systemd.user.timers.power-profile-policy.Install.WantedBy = lib.mkForce [ ];
           programs.waybar.enable = lib.mkForce false;

@@ -1,12 +1,12 @@
 /* Keep the greeter quiet and readable, without an image or animated background. */
 window {
-  background-image: linear-gradient(135deg, #101318, #1b222b);
-  color: #e5e9ef;
+  background-image: linear-gradient(135deg, @background, @backgroundEnd);
+  color: @text;
 }
 
 frame.background {
-  background-color: #20262e;
-  border: 1px solid #39424e;
+  background-color: @surface;
+  border: 1px solid @border;
   border-radius: 14px;
 }
 
@@ -20,13 +20,13 @@ entry {
   min-height: 38px;
   padding: 6px 12px;
   border-radius: 8px;
-  background-color: #131920;
-  border: 1px solid #414c5a;
+  background-color: @input;
+  border: 1px solid @inputBorder;
 }
 
 entry:focus {
-  border-color: #a9bdd0;
-  box-shadow: 0 0 0 1px #a9bdd0;
+  border-color: @focus;
+  box-shadow: 0 0 0 1px @focus;
 }
 
 button {
@@ -37,20 +37,20 @@ button {
 
 button.suggested-action {
   background-image: none;
-  background-color: #d5dfe8;
-  color: #17202a;
-  border: 1px solid #d5dfe8;
+  background-color: @action;
+  color: @actionText;
+  border: 1px solid @action;
   font-weight: 600;
 }
 
 button.suggested-action:hover {
-  background-color: #edf2f7;
+  background-color: @actionHover;
 }
 
 /* Power controls remain recognizable but don't dominate the login form. */
 button.destructive-action {
   background-image: none;
-  background-color: #303842;
-  color: #e5e9ef;
-  border: 1px solid #4a5664;
+  background-color: @secondary;
+  color: @text;
+  border: 1px solid @secondaryBorder;
 }
