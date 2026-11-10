@@ -1,7 +1,7 @@
 { moduleWithSystem, ... }:
 {
   flake.homeModules.waybar = moduleWithSystem (
-    { pkgs, ... }:
+    { pkgs, config, ... }:
     let
       ghostty = "${pkgs.ghostty}/bin/ghostty";
       btop = "${pkgs.btop}/bin/btop";
@@ -18,7 +18,13 @@
         "${pkgs.systemd}/bin/systemd-run --user --collect "
         + "--unit=waybar-power-action -- ${hyprshutdown} --no-fork "
         + "-t '${label}' --post-cmd '${pkgs.systemd}/bin/systemctl ${action}'";
-      powerprofilesctl = "${pkgs.power-profiles-daemon}/bin/powerprofilesctl";
+      powerPolicy = "${config.packages.power-profile-policy}/bin/power-profile-policy";
+      powerMenuActions = {
+        automatic = "${powerPolicy} auto";
+        "power-saver" = "${powerPolicy} power-saver";
+        balanced = "${powerPolicy} balanced";
+        performance = "${powerPolicy} performance";
+      };
       showFailedUnits = pkgs.writeShellScript "show-failed-units" ''
         set -u
 
@@ -187,7 +193,7 @@
               "network"
               "bluetooth"
               "pulseaudio"
-              "power-profiles-daemon"
+              "custom/power-profile"
               "battery"
             ];
           };
@@ -250,15 +256,14 @@
             on-click-right = "${ghostty} -e ${nmtui}";
           };
 
-          # Keep the current profile visible beside the battery's profile menu.
-          "power-profiles-daemon" = {
-            format = "{icon}";
-            tooltip-format = "Power profile: {profile}\nClick to cycle profiles";
-            format-icons = {
-              "power-saver" = "";
-              balanced = "";
-              performance = "";
-            };
+          # Read the actual daemon profile plus the session's policy mode.
+          "custom/power-profile" = {
+            exec = "${powerPolicy} status";
+            return-type = "json";
+            interval = 2;
+            menu = "on-click";
+            menu-file = "~/.config/waybar/power_profile_menu.xml";
+            menu-actions = powerMenuActions;
           };
 
           battery = {
@@ -301,11 +306,7 @@
             full-at = 80;
             menu = "on-click";
             menu-file = "~/.config/waybar/power_profile_menu.xml";
-            menu-actions = {
-              "power-saver" = "${powerprofilesctl} set power-saver";
-              balanced = "${powerprofilesctl} set balanced";
-              performance = "${powerprofilesctl} set performance";
-            };
+            menu-actions = powerMenuActions;
             states = {
               warning = 30;
               critical = 15;
@@ -403,6 +404,11 @@
         <?xml version="1.0" encoding="UTF-8"?>
         <interface>
           <object class="GtkMenu" id="menu">
+            <child>
+              <object class="GtkMenuItem" id="automatic">
+                <property name="label">Automatic</property>
+              </object>
+            </child>
             <child>
               <object class="GtkMenuItem" id="power-saver">
                 <property name="label">Power Saver</property>

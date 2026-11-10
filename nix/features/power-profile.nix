@@ -1,68 +1,93 @@
+{ moduleWithSystem, ... }:
 {
-  flake.nixosModules.powerProfile =
-    { pkgs, ... }:
+  perSystem =
+    { pkgs, lib, ... }:
+    {
+      checks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+        power-profile-policy =
+          pkgs.runCommand "power-profile-policy-tests"
+            {
+              nativeBuildInputs = [
+                pkgs.bash
+                pkgs.coreutils
+                pkgs.util-linux
+                pkgs.jq
+              ];
+            }
+            ''
+              bash -euo pipefail ${./files/power-profile/test-policy.sh} ${./files/power-profile/policy.sh}
+              touch "$out"
+            '';
+      };
+
+      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+        power-profile-policy = pkgs.writeShellApplication {
+          name = "power-profile-policy";
+          runtimeInputs = [
+            pkgs.coreutils
+            pkgs.util-linux
+            pkgs.jq
+            pkgs.power-profiles-daemon
+          ];
+          text = builtins.readFile ./files/power-profile/policy.sh;
+        };
+      };
+    };
+
+  flake.nixosModules.powerProfile = {
+    services.power-profiles-daemon.enable = true;
+    services.upower.enable = true;
+    systemd.services.upower.wantedBy = [ "multi-user.target" ];
+  };
+
+  flake.homeModules.powerProfile = moduleWithSystem (
+    { config, ... }:
     let
-      automaticPowerProfile = pkgs.writeShellScript "automatic-power-profile" ''
-        set -eu
-
-        on_ac=0
-        for supply in /sys/class/power_supply/*; do
-          [ -r "$supply/type" ] || continue
-          [ -r "$supply/online" ] || continue
-
-          if [ "$(cat "$supply/type")" = Mains ] && [ "$(cat "$supply/online")" = 1 ]; then
-            on_ac=1
-            break
-          fi
-        done
-
-        if [ "$on_ac" = 1 ]; then
-          profile=performance
-        else
-          capacity=
-          for supply in /sys/class/power_supply/*; do
-            [ -r "$supply/type" ] || continue
-            [ -r "$supply/capacity" ] || continue
-
-            if [ "$(cat "$supply/type")" = Battery ]; then
-              capacity="$(cat "$supply/capacity")"
-              break
-            fi
-          done
-
-          if [ -z "$capacity" ]; then
-            echo "Unable to determine battery capacity" >&2
-            exit 1
-          elif [ "$capacity" -le 40 ]; then
-            profile=power-saver
-          else
-            profile=balanced
-          fi
-        fi
-
-        ${pkgs.power-profiles-daemon}/bin/powerprofilesctl set "$profile"
-      '';
+      policy = "${config.packages.power-profile-policy}/bin/power-profile-policy";
     in
     {
-      # Battery monitoring
-      services.power-profiles-daemon.enable = true;
-      services.upower.enable = true;
-      systemd.services.upower.wantedBy = [ "multi-user.target" ];
-
-      services.udev.extraRules = ''
-        SUBSYSTEM=="power_supply", ACTION=="change", TAG+="systemd", ENV{SYSTEMD_WANTS}+="automatic-power-profile.service"
-      '';
-
-      systemd.services.automatic-power-profile = {
-        description = "Select power profile from AC state and battery level";
-        wantedBy = [ "multi-user.target" ];
-        wants = [ "power-profiles-daemon.service" ];
-        after = [ "power-profiles-daemon.service" ];
-        serviceConfig = {
+      systemd.user.services.power-profile-session = {
+        Unit = {
+          Description = "Reset power-profile policy to Auto at graphical login";
+          PartOf = [ "graphical-session.target" ];
+          Before = [ "graphical-session.target" ];
+        };
+        Service = {
           Type = "oneshot";
-          ExecStart = automaticPowerProfile;
+          RemainAfterExit = true;
+          ExecStart = "${policy} auto";
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
+
+      systemd.user.services.power-profile-policy = {
+        Unit = {
+          Description = "Apply automatic power profile unless manually overridden";
+          Requisite = [ "power-profile-session.service" ];
+          After = [ "power-profile-session.service" ];
+          PartOf = [ "graphical-session.target" ];
+        };
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${policy} apply";
         };
       };
 
-    };
+      # Polling also catches battery thresholds; udev SYSTEMD_WANTS is not a
+      # reliable trigger for every change of an already-active power device.
+      systemd.user.timers.power-profile-policy = {
+        Unit = {
+          Description = "Check AC and battery state every 30 seconds";
+          PartOf = [ "graphical-session.target" ];
+          After = [ "power-profile-session.service" ];
+        };
+        Timer = {
+          OnActiveSec = "30s";
+          OnUnitActiveSec = "30s";
+          AccuracySec = "1s";
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
+    }
+  );
 }

@@ -36,7 +36,6 @@
         services.acpid.enable = lib.mkForce false;
         services.btrfs.autoScrub.enable = lib.mkForce false;
         systemd.services.fingerprint-lid-state.enable = false;
-        systemd.services.automatic-power-profile.enable = false;
         services.udev.extraRules = lib.mkForce "";
         security.pam.services = {
           login.fprintAuth = lib.mkForce false;
@@ -52,6 +51,8 @@
         home-manager.users.rms = {
           # Test the replacement only here; the laptop still imports Waybar.
           imports = [ self.homeModules.quickshell ];
+          systemd.user.services.power-profile-session.Install.WantedBy = lib.mkForce [ ];
+          systemd.user.timers.power-profile-policy.Install.WantedBy = lib.mkForce [ ];
           programs.waybar.enable = lib.mkForce false;
           programs.waybar.systemd.enable = lib.mkForce false;
           services.rex.enable = lib.mkForce false;

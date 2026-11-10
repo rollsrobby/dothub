@@ -64,7 +64,7 @@ window#waybar {
 #cpu,
 #idle_inhibitor,
 #systemd-failed-units,
-#power-profiles-daemon,
+#custom-power-profile,
 #battery,
 #network,
 #bluetooth {

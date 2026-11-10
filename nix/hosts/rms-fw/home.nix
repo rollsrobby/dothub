@@ -11,6 +11,7 @@
       self.homeModules.fish
       self.homeModules.session
       self.homeModules.walker
+      self.homeModules.powerProfile
       self.homeModules.waybar
       self.homeModules.hyprland
       self.homeModules.hyprlock
