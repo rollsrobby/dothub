@@ -1,7 +1,6 @@
 { lib, ... }:
 let
-  palette = import ../../lib/desktop-colors.nix;
-  colors = palette.greeter;
+  colors = (import ../../lib/desktop-colors.nix).greeter;
   colorFormats = import ../../lib/desktop-color-formats.nix { inherit lib; };
   opaque = color: colorFormats.hyprlock color "1.0";
   label = text: size: y: color: {
@@ -42,7 +41,7 @@ in
         background = [
           {
             monitor = "";
-            path = "~/walls/minimal/a_cartoon_of_trees_on_a_hill_02.png";
+            path = "${./files/hyprlock/background-image.png}";
             blur_passes = 2;
             contrast = 0.8916;
             brightness = 0.8172;
@@ -77,7 +76,7 @@ in
             inner_color = opaque colors.input;
             font_color = opaque colors.text;
             check_color = opaque colors.focus;
-            fail_color = opaque palette.lock.danger;
+            fail_color = opaque colors.danger;
             capslock_color = opaque colors.focus;
             font_family = "Sans";
             fade_on_empty = false;
@@ -95,7 +94,7 @@ in
           (label "Welcome back, $USER" 22 20 colors.text)
           # Keep both fingerprint lines inside the opaque panel, below the input.
           (label "$FPRINTPROMPT" 13 (-130) colors.focus)
-          (label "$FPRINTFAIL" 12 (-160) palette.lock.danger)
+          (label "$FPRINTFAIL" 12 (-160) colors.danger)
         ];
       };
     };

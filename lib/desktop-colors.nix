@@ -33,6 +33,7 @@
     input = "131920";
     inputBorder = "414c5a";
     focus = "a9bdd0";
+    danger = "e05656";
     action = "d5dfe8";
     actionText = "17202a";
     actionHover = "edf2f7";
@@ -40,11 +41,4 @@
     secondaryBorder = "4a5664";
   };
 
-  lock = {
-    border = "505869";
-    surface = "181c24";
-    text = "eaecf2";
-    textMuted = "d8dee9";
-    danger = "e05656";
-  };
 }
