@@ -55,8 +55,6 @@
             self.homeModules.quickshell
             self.homeModules.vmHyprlock
           ];
-          systemd.user.services.power-profile-session.Install.WantedBy = lib.mkForce [ ];
-          systemd.user.timers.power-profile-policy.Install.WantedBy = lib.mkForce [ ];
           programs.waybar.enable = lib.mkForce false;
           programs.waybar.systemd.enable = lib.mkForce false;
           services.rex.enable = lib.mkForce false;

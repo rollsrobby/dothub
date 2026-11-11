@@ -1,0 +1,6 @@
+singleton Palette 1.0 Palette.qml
+BarButton 1.0 BarButton.qml
+BarMenu 1.0 BarMenu.qml
+PollText 1.0 PollText.qml
+ProfileMenu 1.0 ProfileMenu.qml
+StreamJson 1.0 StreamJson.qml
