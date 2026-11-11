@@ -3,7 +3,7 @@
   # Opt-in preview: only the VM imports this module alongside the shared hyprlock layout.
   flake.homeModules.vmHyprlock = moduleWithSystem (
     { config, ... }:
-    { lib, pkgs, ... }:
+    { pkgs, ... }:
     {
       home.packages = [
         (pkgs.writeShellApplication {
@@ -18,7 +18,6 @@
         })
       ];
 
-      programs.hyprlock.settings.auth.fingerprint.enabled = lib.mkForce false;
     }
   );
 }

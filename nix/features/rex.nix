@@ -5,7 +5,7 @@
     users.users.rms.linger = true;
   };
 
-  flake.homeModules.rex = {
+  flake.homeModules.rex = { lib, ... }: {
     imports = [ inputs.rex.homeManagerModules.default ];
 
     # Install Rex and its terminal/SSH integration for rms.
@@ -14,9 +14,9 @@
 
     # Run terminals as rms, with rms's home and application configuration.
     services.rex = {
-      enable = true;
+      enable = lib.mkDefault true;
       tailscale = {
-        enable = true;
+        enable = lib.mkDefault true;
         hostname = "rex-rms-fw";
       };
     };

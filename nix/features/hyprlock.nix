@@ -19,7 +19,7 @@ in
     security.pam.services.hyprlock = { };
   };
 
-  flake.homeModules.hyprlock = { pkgs, ... }: {
+  flake.homeModules.hyprlock = { pkgs, lib, ... }: {
     programs.hyprlock = {
       enable = true;
 
@@ -29,7 +29,7 @@ in
             enabled = true;
           };
           fingerprint = {
-            enabled = true;
+            enabled = lib.mkDefault true;
             ready_message = "Touch the fingerprint sensor";
             present_message = "Scanning fingerprint...";
             retry_delay = 250; # in milliseconds

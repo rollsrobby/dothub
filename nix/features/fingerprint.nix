@@ -1,6 +1,11 @@
 {
   flake.nixosModules.fingerprint =
-    { pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       fingerprintLidState = pkgs.writeShellScript "fingerprint-lid-state" ''
         set -eu
@@ -43,40 +48,43 @@
       '';
     in
     {
-      services.acpid = {
-        enable = true;
-        handlers.lid = {
-          event = "button/lid.*";
-          action = "${fingerprintLidState}";
-        };
-      };
+      config = lib.mkMerge [
+        { services.fprintd.enable = lib.mkDefault true; }
+        (lib.mkIf config.services.fprintd.enable {
+          services.acpid = {
+            enable = true;
+            handlers.lid = {
+              event = "button/lid.*";
+              action = "${fingerprintLidState}";
+            };
+          };
 
-      services.fprintd = {
-        enable = true;
-        tod.enable = true;
-        tod.driver = pkgs.libfprint-2-tod1-goodix;
-      };
+          services.fprintd = {
+            tod.enable = true;
+            tod.driver = pkgs.libfprint-2-tod1-goodix;
+          };
 
-      security.pam.services = {
-        login.fprintAuth = true;
-        sudo.fprintAuth = true;
-        polkit-1.fprintAuth = true;
-      };
+          security.pam.services = {
+            login.fprintAuth = true;
+            sudo.fprintAuth = true;
+            polkit-1.fprintAuth = true;
+          };
 
-      systemd.services.fingerprint-lid-state = {
-        description = "Toggle fingerprint reader based on lid state";
-        wantedBy = [ "multi-user.target" ];
-        wants = [ "fprintd.service" ];
-        after = [
-          "acpid.service"
-          "fprintd.service"
-        ];
-        before = [ "display-manager.service" ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = fingerprintLidState;
-        };
-      };
-
+          systemd.services.fingerprint-lid-state = {
+            description = "Toggle fingerprint reader based on lid state";
+            wantedBy = [ "multi-user.target" ];
+            wants = [ "fprintd.service" ];
+            after = [
+              "acpid.service"
+              "fprintd.service"
+            ];
+            before = [ "display-manager.service" ];
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = fingerprintLidState;
+            };
+          };
+        })
+      ];
     };
 }

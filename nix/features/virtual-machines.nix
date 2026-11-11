@@ -1,9 +1,9 @@
 {
   flake.nixosModules.virtualMachines =
-    { pkgs, ... }:
+    { lib, pkgs, ... }:
     {
       virtualisation.libvirtd = {
-        enable = true;
+        enable = lib.mkDefault true;
         qemu.runAsRoot = false;
       };
 
