@@ -11,6 +11,7 @@ One home for NixOS, nix-darwin, Home Manager, and editable application settings.
 - `nix/profiles/`: collections of features and shared system policy.
 - `nix/users/rms.nix`: Linux account declaration (groups, shell, SSH keys).
 - `nix/hosts/rms-fw/`: Framework system, home profile, hardware, disks, and VM overrides.
+- `nix/hosts/rms-lab/`: headless Framework preparation; hardware/install inputs still required.
 - `nix/hosts/rms-mbp/`: Apple Silicon Mac system and Home Manager profile.
 
 Each host's `default.nix` connects `home-manager.users.rms` to its own
@@ -199,6 +200,73 @@ stores aren't automatically inherited by the system service. Provider credential
 must be available to the server user. The server and dedicated Tailscale daemon
 are both disabled in `build-vm`; closing/suspending the laptop also makes the web
 UI unavailable.
+
+## Headless Framework: rms-lab (preparation only)
+
+`nix/hosts/rms-lab/` composes shared CLI, Fish/Zsh, Neovim, tmux/sesh,
+OpenCode CLI/config, and a personal Home Manager Rex service as `rms` with linger.
+It does not import the laptop, desktop, or VM profiles. Rex derives its node name
+from the host: `rex-rms-lab`; the laptop remains `rex-rms-fw`. OpenCode on `rms-fw`
+continues unchanged until a separate migration.
+
+**This is not an installable system yet.** `hardware.nix` intentionally fails an
+assertion, and supplies no root filesystem or bootloader. Before deployment:
+
+- Confirm the exact Framework model/CPU and architecture (currently a provisional
+  `x86_64-linux` target), firmware mode, NICs, and desired storage/encryption layout.
+- Generate hardware configuration on the target, then place its NixOS settings
+  inside `flake.nixosModules.rmsLabHardware` in `hardware.nix`. Every `.nix` file
+  under `nix/` is a flake-parts module: do not drop a raw generated module there.
+  Supply verified filesystems/UUIDs, initrd drivers, swap and bootloader settings,
+  and the matching nixos-hardware profile if appropriate. Remove the blocking
+  assertion only after review. There is no lab Disko configuration; do not use
+  the laptop's device path or partitioning configuration.
+- Provision a local `rms` password for console/sudo recovery securely during
+  installation. The shared account includes the existing mobile-phone public
+  admin SSH key; no private keys, host keys or passwords are copied. SSH accepts
+  keys only and is opened only on `tailscale0`. Plan console access for initial
+  network and Tailscale enrollment. NetworkManager/DHCP is configured; supply any
+  Wi-Fi, static addressing or other site-specific inputs separately.
+- Put this checkout at **`/home/rms/dothub`**, owned by `rms`, before using Neovim
+  or the dothub sesh entry. Neovim uses the shared editable config link, not a
+  store snapshot; Ghostty is not linked/installed on the lab. Lazy.nvim/plugins
+  and language tools may need first-run network access. Shared tmux's explicit
+  yank binding uses `wl-copy` (requires Wayland); headless client clipboard
+  integration needs terminal support rather than a local desktop clipboard.
+- Enroll the host Tailscale node and the personal Rex node independently using
+  the normal interactive login flows. Rex retains its default personal-access
+  restrictions (`allowTailnetMembers = false`, no anonymous access). Enroll the
+  dedicated OpenCode node with **`--hostname=opencode-rms-lab`**, using the same
+  socket and HTTPS Serve steps above on the lab. Do not reuse the laptop's
+  `opencode` node identity/state. Its URL is then
+  `https://opencode-rms-lab.<tailnet>.ts.net`; restrict access with tailnet ACLs.
+- Authenticate Rex/package access, OpenCode providers/MCP, GitHub and other CLI
+  tools as needed on the new host. Supply any private Nix registry/cache netrc
+  outside Git/the Nix store if required; no laptop `/etc/nix/netrc` is assumed.
+  Generate/provision the lab's own SSH signing key (shared Git settings expect
+  `~/.ssh/id_ed25519.pub`). The lab does not assume a 1Password desktop agent.
+
+OpenCode uses the existing loopback-only authenticated service at `127.0.0.1:4096`
+and a separate userspace Tailscale HTTPS proxy. Its password is generated locally
+in `/var/lib/opencode-server/password`; neither service exposes a public port or
+enables Funnel. Credentials and Tailscale state must be created on the new host.
+
+Preparation checks, without activation:
+
+```sh
+nix eval .#nixosConfigurations.rms-lab.config.networking.hostName
+nix build .#nixosConfigurations.rms-lab.config.home-manager.users.rms.home.activationPackage --no-link
+# Only after supplying and reviewing real hardware/install settings:
+nix build .#nixosConfigurations.rms-lab.config.system.build.toplevel --no-link
+```
+
+The flake exports `checks.x86_64-linux.rms-lab-home`, but deliberately no lab
+toplevel check until real hardware is supplied. `nix flake check --no-build` also
+evaluates every `nixosConfigurations` toplevel, so the lab's intentional hardware
+assertion blocks that aggregate command until provisioning is completed; use the
+targeted home build above in the meantime. A successful home build does not
+validate boot, hardware, remote enrollment, credentials or application first-run
+downloads. No deployment or activation is performed by these checks.
 
 ## MacBook: rms-mbp
 
