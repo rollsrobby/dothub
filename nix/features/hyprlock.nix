@@ -42,7 +42,7 @@ in
         background = [
           {
             monitor = "";
-            path = "~/walls/centered/a_palm_tree_and_cactus_on_a_pink_background.png";
+            path = "~/walls/minimal/a_cartoon_of_trees_on_a_hill_02.png";
             blur_passes = 2;
             contrast = 0.8916;
             brightness = 0.8172;
