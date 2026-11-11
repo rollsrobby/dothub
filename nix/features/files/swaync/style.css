@@ -1,4 +1,4 @@
-/* Keep upstream layout/accessibility styling; customize its GTK4 theme tokens. */
+/* Keep upstream layout/animations; override GTK4 tokens and presentation only. */
 :root {
   --cc-bg: @surface@;
   --noti-bg: @surfaceRgb@;
@@ -6,14 +6,100 @@
   --noti-bg-darker: @surfaceDim@;
   --noti-bg-hover: @surfaceHover@;
   --noti-bg-focus: @surfaceHover@;
-  --noti-border-color: @accent@;
+  --noti-border-color: @surfacePressed@;
   --noti-close-bg: @surfaceHover@;
   --noti-close-bg-hover: @surfacePressed@;
   --text-color: @text@;
   --text-color-disabled: @textMuted@;
   --bg-selected: @accent@;
-  --border-radius: 8px;
+  --border-radius: 10px;
   --notification-icon-size: 32px;
+  --notification-group-icon-size: 20px;
+  --notification-shadow: none;
+  --font-size-summary: 14px;
+  --font-size-body: 13px;
+}
+
+/* Pad the clickable content, not the card, so hover/actions still fill it. */
+.notification-default-action {
+  padding: 12px 14px;
+}
+
+.floating-notifications .notification-default-action {
+  padding: 14px 16px;
+}
+
+.notification-content .image {
+  margin: 0 12px 0 0;
+}
+
+.notification-content .summary {
+  font-weight: 600;
+}
+
+.notification-content .body {
+  margin-top: 4px;
+}
+
+/* Keep timestamps secondary, with room for the overlaid dismiss button. */
+.notification-content .time {
+  color: @textMuted@;
+  font-size: 11px;
+  font-weight: 400;
+  margin-left: 10px;
+  margin-right: 20px;
+}
+
+/* Replace the square focus slab without losing keyboard focus feedback. */
+.notification-group,
+.notification-row:focus,
+.notification-group:focus {
+  background: transparent;
+  border-radius: 12px;
+}
+
+.notification-row:focus-visible,
+.notification-group:focus-visible {
+  outline: 1px solid @accent@;
+  outline-offset: -1px;
+}
+
+.notification-group:not(.collapsed) {
+  background: @surfaceDim@;
+}
+
+/* SwayNC reveals these controls only when expanded; keep them compact. */
+.notification-group .notification-group-headers,
+.notification-group .notification-group-buttons {
+  margin: 10px 14px 4px;
+}
+
+.notification-group .notification-group-header {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.notification-group .notification-group-icon {
+  margin-right: 6px;
+}
+
+.notification-group .notification-group-buttons button {
+  min-width: 26px;
+  min-height: 26px;
+  padding: 0;
+  border-radius: 8px;
+  background: @surfaceHover@;
+  color: @text@;
+  box-shadow: none;
+}
+
+.notification-group .notification-group-buttons button:hover {
+  background: @surfacePressed@;
+}
+
+/* Other apps should remain readable while a group is expanded. */
+.notification-group.collapsed.not-expanded {
+  opacity: 0.75;
 }
 
 .notification.critical {
