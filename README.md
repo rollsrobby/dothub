@@ -143,52 +143,6 @@ lid handler when closed. The VM has no reader and continues to use `rms` / `vm`.
 Styling changes are shared with the laptop configuration, but building/testing
 them does not activate them on the running system.
 
-### Quickshell bar prototype (VM only)
-
-The VM now replaces Waybar with a custom Quickshell bar. The physical laptop
-still uses Waybar. This is a faithful-recreation prototype, not yet a claim of
-full feature parity. QML lives in `nix/features/files/quickshell/`; the
-optional Home Manager module and session service live in
-`nix/features/quickshell.nix`.
-
-```sh
-# Build without switching the host, then launch the test desktop.
-nix build .#vm -o result-vm
-./result-vm/bin/run-rms-fw-vm-vm
-
-# Inside the guest: inspect or restart the bar.
-systemctl --user status quickshell
-journalctl --user -u quickshell -b
-systemctl --user restart quickshell
-```
-
-Log in as **rms / vm**. The old standard test disk was removed before this
-prototype; the runner creates a fresh disk on its next launch. The separately
-named lavender disk is not used or removed. Keep the VM stopped when rebuilding
-and relaunching. Rebuilds retain the guest disk but update its system closure.
-
-Test workspace clicks, multi-monitor layout, tray menus, audio controls, the
-power menu, notifications, and absence of duplicate bars. Battery, Bluetooth,
-Wi-Fi, physical sensors, and docking need a later laptop test. Weather contacts
-wttr.in and depends on guest network access. The bar intentionally retains Dunst
-and Hyprlock rather than replacing the notification daemon or lock screen.
-
-To return the VM to Waybar, remove the Quickshell import and the two Waybar
-`mkForce false` overrides in `nix/hosts/rms-fw/vm.nix` (and adjust the
-`quickshell-isolation` check). No host activation is needed for either version.
-
-Current prototype includes workspaces, clock/calendar, weather (when space permits),
-Dunst pause, expandable tray, network/Bluetooth launchers, PipeWire audio,
-timed idle inhibition, btop launcher, power profiles, UPower battery, and power
-menu. Not yet ported: privacy indicators, failed-unit reporting, the detailed
-system-metrics drawer, network throughput/signal, and Bluetooth connection count.
-
-Validation: the VM build, flake evaluation, formatting, and host/VM isolation
-check passed. A fresh guest booted through ReGreet into Hyprland, started the bar
-automatically, switched to workspace 2 by clicking, and opened the power menu
-and calendar outside the panel. Power actions were not executed. Audio/tray
-interaction and hardware-specific behaviour still require manual testing.
-
 ## OpenCode web UI over Tailscale
 
 `nix/features/opencode-server.nix` runs OpenCode V2 as `rms` at

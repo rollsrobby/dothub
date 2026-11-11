@@ -50,15 +50,9 @@
         services.opencodeServer.enable = lib.mkForce false;
         systemd.user.services.tailscale-systray.enable = false;
         home-manager.users.rms = {
-          # Test the replacement only here; the laptop still imports Waybar.
-          imports = [
-            self.homeModules.quickshell
-            self.homeModules.vmHyprlock
-          ];
+          imports = [ self.homeModules.vmHyprlock ];
           systemd.user.services.power-profile-session.Install.WantedBy = lib.mkForce [ ];
           systemd.user.timers.power-profile-policy.Install.WantedBy = lib.mkForce [ ];
-          programs.waybar.enable = lib.mkForce false;
-          programs.waybar.systemd.enable = lib.mkForce false;
           services.rex.enable = lib.mkForce false;
           services.rex.tailscale.enable = lib.mkForce false;
           # The VM deliberately does not share the host's dotfiles checkout.
