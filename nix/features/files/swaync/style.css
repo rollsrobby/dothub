@@ -102,6 +102,17 @@
   opacity: 0.75;
 }
 
+/* Low urgency stays quiet without dimming body text or action buttons. */
+.notification.low .summary {
+  color: @textMuted@;
+  font-weight: 500;
+}
+
+/* A single accent edge distinguishes normal urgency from low. */
+.notification.normal {
+  border-left: 3px solid @accent@;
+}
+
 .notification.critical {
   background: @dangerSurface@;
   border-color: @danger@;
