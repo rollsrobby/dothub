@@ -6,7 +6,6 @@
     {
       imports = [
         self.nixosModules.unfree
-        self.nixosModules.opencodePackage
       ];
 
       # Desktop and host-administration tools only. Shared CLI packages live in

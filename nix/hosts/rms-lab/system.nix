@@ -12,7 +12,6 @@
         self.nixosModules.fish
         self.nixosModules.zsh
         self.nixosModules.rex
-        self.nixosModules.opencodePackage
         self.nixosModules.opencodeServer
       ];
 

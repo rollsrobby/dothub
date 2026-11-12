@@ -404,16 +404,7 @@
         package = pkgs.waybar.overrideAttrs (old: {
           patches = (old.patches or [ ]) ++ [
             ./files/waybar/waybar-hyprland-lua.patch
-            ./files/waybar/waybar-systemd-refresh.patch
           ];
-          # Exercise the patched update method with lightweight GTK/fmt stand-ins.
-          postPatch = (old.postPatch or "") + ''
-            sed -n '/auto SystemdFailedUnits::update() -> void/,$p' \
-              src/modules/systemd_failed_units.cpp > "$TMPDIR/systemd-update.inc"
-            $CXX -std=c++17 -I"$TMPDIR" \
-              ${./files/waybar/tests/systemd-refresh.cpp} -o "$TMPDIR/test-systemd-refresh"
-            "$TMPDIR/test-systemd-refresh"
-          '';
         });
         systemd.enable = true;
         settings = waybarSettings;
