@@ -70,6 +70,7 @@
         cat = "bat";
         ll = "eza --icons --git --long --all";
         ls = "eza --icons --git --long";
+        ns = "nix-search-tv print | fzf --preview 'nix-search-tv preview {}' --scheme history";
         oc = "opencode .";
         sml = "tmuxp load ~/.tmuxp/sml.yaml -a";
         tks = "tmux kill-server";
@@ -149,17 +150,6 @@
 
             eval "$(${pkgs.devenv}/bin/devenv hook zsh)"
             h() { "$@" --help 2>&1 | bat -l help -p --paging=never; }
-            # Fuzzy-search nixpkgs and put `nix shell nixpkgs#<attr>` on the command line.
-            ns() {
-              local attr
-              # Only the nixpkgs index (installable packages), not NixOS/home-manager options.
-              attr=$(nix-search-tv print --indexes nixpkgs \
-                | fzf --preview 'nix-search-tv preview {}' --scheme history \
-                | awk '{print $2}')
-              [[ -z "$attr" ]] && return
-              # print -z pushes text into the edit buffer without running it.
-              print -z "nix shell nixpkgs#$attr"
-            }
             function sesh-sessions() {
               {
                 exec </dev/tty

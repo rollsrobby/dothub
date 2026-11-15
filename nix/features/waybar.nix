@@ -401,11 +401,6 @@
     {
       programs.waybar = {
         enable = true;
-        package = pkgs.waybar.overrideAttrs (old: {
-          patches = (old.patches or [ ]) ++ [
-            ./files/waybar/waybar-hyprland-lua.patch
-          ];
-        });
         systemd.enable = true;
         settings = waybarSettings;
         style = waybarStyle;

@@ -39,7 +39,9 @@
             url = "https://www.superlogical.com/rex/community-mcp";
           };
         };
-        plugins = [ "@slkiser/opencode-quota" ];
+        plugins = [
+          "@slkiser/opencode-quota"
+        ];
       };
 
       cli = {
@@ -68,6 +70,9 @@
           layout = "horizontal";
           indicators = "status";
         };
+        plugins = [
+          "opencode-vim@latest"
+        ];
       };
     };
   };
