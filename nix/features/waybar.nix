@@ -25,12 +25,17 @@
         + "--unit=waybar-power-action -- ${hyprshutdown} --no-fork "
         + "-t '${label}' --post-cmd '${pkgs.systemd}/bin/systemctl ${action}'";
       powerPolicy = "${config.packages.power-profile-policy}/bin/power-profile-policy";
+      # Refresh every bar after successful actions, without polling every two seconds.
+      selectPowerProfile =
+        profile: "${powerPolicy} ${profile} && ${pkgs.procps}/bin/pkill -RTMIN+9 -x waybar";
       powerMenuActions = {
-        automatic = "${powerPolicy} auto";
-        "power-saver" = "${powerPolicy} power-saver";
-        balanced = "${powerPolicy} balanced";
-        performance = "${powerPolicy} performance";
+        automatic = selectPowerProfile "auto";
+        "power-saver" = selectPowerProfile "power-saver";
+        balanced = selectPowerProfile "balanced";
+        performance = selectPowerProfile "performance";
       };
+      networkActions = "\nClick: Wi-Fi settings\nRight-click: network settings";
+      bluetoothActions = "\nClick: Bluetooth devices\nRight-click: toggle Bluetooth power";
       showFailedUnits = pkgs.writeShellScript "show-failed-units" ''
         set -u
 
@@ -190,7 +195,7 @@
           cpu = {
             interval = 5;
             format = "CPU {usage}%";
-            tooltip-format = "CPU: {usage}%\nLoad: {load}";
+            tooltip-format = "CPU: {usage}%\nLoad: {load}\nClick: system monitor\nRight-click: terminal";
             on-click = "${ghostty} -e ${btop}";
             on-click-right = ghostty;
           };
@@ -198,7 +203,7 @@
           memory = {
             interval = 10;
             format = "RAM {percentage}%";
-            tooltip-format = "Memory: {used:0.1f}/{total:0.1f} GiB ({percentage}%)\nZram: {swapUsed:0.1f}/{swapTotal:0.1f} GiB ({swapPercentage}%)";
+            tooltip-format = "Memory: {used:0.1f}/{total:0.1f} GiB ({percentage}%)\nZram: {swapUsed:0.1f}/{swapTotal:0.1f} GiB ({swapPercentage}%)\nClick: system monitor";
             on-click = "${ghostty} -e ${btop}";
             states = {
               warning = 80;
@@ -248,8 +253,15 @@
 
           clock = {
             format = "<span weight='normal'>{0:L%a %b %d}</span>  <b>{0:%H:%M}</b>";
-            tooltip-format = "<tt><small>{calendar}</small></tt>";
+            tooltip-format = "<tt><small>{calendar}</small></tt>\nScroll: change month\nClick: return to current month";
+            actions = {
+              on-scroll-up = "shift_up";
+              on-scroll-down = "shift_down";
+              on-click = "shift_reset";
+            };
             calendar = {
+              mode = "month";
+              on-scroll = 1;
               format = {
                 today = "<span color='${colorFormats.css colors.accent}'><b>{}</b></span>";
               };
@@ -267,9 +279,10 @@
             format-wifi = "{icon} Wi-Fi";
             format-ethernet = "󰀂 LAN";
             format-disconnected = "󰤮";
-            tooltip-format-wifi = "{essid} ({frequency} GHz)\n⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}";
-            tooltip-format-ethernet = "⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}";
-            tooltip-format-disconnected = "Disconnected";
+            tooltip-format-wifi =
+              "{essid} ({frequency} GHz)\n⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}" + networkActions;
+            tooltip-format-ethernet = "⇣{bandwidthDownBytes}  ⇡{bandwidthUpBytes}" + networkActions;
+            tooltip-format-disconnected = "Disconnected" + networkActions;
             interval = 3;
             spacing = 1;
             on-click = "${ghostty} --title=wifitui -e ${wifitui}";
@@ -280,7 +293,8 @@
           "custom/power-profile" = {
             exec = "${powerPolicy} status";
             return-type = "json";
-            interval = 2;
+            signal = 9;
+            interval = 30;
             menu = "on-click";
             menu-file = "~/.config/waybar/power_profile_menu.xml";
             menu-actions = powerMenuActions;
@@ -335,7 +349,7 @@
 
           "custom/bluetooth-settings" = {
             format = "";
-            tooltip-format = "Bluetooth devices";
+            tooltip-format = "Bluetooth settings" + bluetoothActions;
             on-click = "${ghostty} --title=bluetui -e ${bluetui}";
             on-click-right = toggleBluetooth;
           };
@@ -346,7 +360,9 @@
             format-disabled = "";
             format-connected = "󰂱";
             format-no-controller = "";
-            tooltip-format = "Devices connected: {num_connections}";
+            tooltip-format = "Devices connected: {num_connections}" + bluetoothActions;
+            tooltip-format-connected =
+              "Devices connected: {num_connections}\n{device_enumerate}" + bluetoothActions;
             on-click = "${ghostty} --title=bluetui -e ${bluetui}";
             on-click-right = toggleBluetooth;
           };
@@ -355,12 +371,16 @@
             format = "{icon} {volume}%";
             on-click = "${pavucontrol}";
             on-click-right = "${wpctl} set-mute @DEFAULT_AUDIO_SINK@ toggle";
-            tooltip-format = "Playing at {volume}%";
+            tooltip-format = "{desc}\nOutput: {icon} · {volume}%\nScroll: adjust volume\nClick: audio mixer\nRight-click: toggle mute";
             scroll-step = 5;
             format-muted = "";
             format-icons = {
               headphone = "";
               headset = "";
+              # {icon} supplies the tooltip's mute status; format-muted stays compact.
+              "headphone-muted" = " Muted";
+              "headset-muted" = " Muted";
+              "default-muted" = " Muted";
               default = [
                 ""
                 ""
