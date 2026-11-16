@@ -21,6 +21,7 @@
       self.homeModules.ssh
       self.homeModules.cursor
       self.homeModules.rex
+      self.homeModules.rexRune
       self.homeModules.braveOrigin
       self.homeModules.miseBrowser
       self.homeModules.redisTui
