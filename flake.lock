@@ -515,10 +515,10 @@
         "nixpkgs": "nixpkgs_7"
       },
       "locked": {
-        "lastModified": 1794779081,
-        "narHash": "sha256-XCxcjQ/eNNeYx8KhpiKwb9XtVtVHKOThWCPAWtTOH7M=",
+        "lastModified": 1794894025,
+        "narHash": "sha256-o2ewnJeh+LJOLchAyD/R/klpVWxWFRZXYrEbj3SkBig=",
         "type": "tarball",
-        "url": "https://pkgs.superlogical.com/rex/nix/snapshot/0.0.1794779081-g2d5402.tar.gz"
+        "url": "https://pkgs.superlogical.com/rex/nix/snapshot/0.0.1794894025-gfcef65.tar.gz"
       },
       "original": {
         "type": "tarball",
@@ -531,11 +531,11 @@
         "zig": "zig"
       },
       "locked": {
-        "lastModified": 1794772243,
-        "narHash": "sha256-j0SPqaYWKN31aj3z4A6LaY9hGM6hj2IluFhopvjBw5w=",
+        "lastModified": 1794850153,
+        "narHash": "sha256-ne3cml6xtRE4yXXPN74WU+U0+Mh4Cm4VIVR4H2O5oWE=",
         "owner": "rollsrobby",
         "repo": "rex-rune",
-        "rev": "8a561248d87941df3b65642f4fdec902b59209f4",
+        "rev": "88aa34f2da0d4855ac1e6757012e1a9598eb3382",
         "type": "github"
       },
       "original": {
