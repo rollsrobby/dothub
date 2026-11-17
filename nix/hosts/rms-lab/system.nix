@@ -1,10 +1,12 @@
-{ self, ... }:
+{ self, inputs, ... }:
 {
   flake.nixosModules.rmsLab =
     { pkgs, ... }:
     {
       imports = [
+        inputs.disko.nixosModules.disko
         self.nixosModules.rmsLabHardware
+        self.diskoConfigurations.hostRmsLab
         self.nixosModules.homeManager
         self.nixosModules.rms
         self.nixosModules.nixPolicy
@@ -25,7 +27,7 @@
       networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 22 ];
       services.openssh = {
         enable = true;
-        openFirewall = false;
+        openFirewall = true;
         settings = {
           PasswordAuthentication = false;
           KbdInteractiveAuthentication = false;
@@ -47,5 +49,9 @@
       services.opencodeServer.enable = true;
       home-manager.users.rms = self.homeModules.rmsLab;
       system.stateVersion = "26.05";
+
+      boot.loader.systemd-boot.enable = true;
+      boot.loader.systemd-boot.configurationLimit = 10;
+      boot.loader.efi.canTouchEfiVariables = true;
     };
 }

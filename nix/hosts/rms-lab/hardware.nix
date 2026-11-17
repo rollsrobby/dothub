@@ -1,16 +1,25 @@
 {
-  flake.nixosModules.rmsLabHardware = {
-    # Framework workstation target; confirm the architecture/model at install.
-    nixpkgs.hostPlatform = "x86_64-linux";
+  flake.nixosModules.rmsLabHardware =
+    { modulesPath, ... }:
+    {
+      imports = [
+        (modulesPath + "/installer/scan/not-detected.nix")
+      ];
 
-    # Replace this module's body with the target's generated hardware settings.
-    # Do not put a raw NixOS module under nix/: import-tree expects flake-parts.
-    # No disks, UUIDs, CPU generation, bootloader, or firmware are guessed here.
-    assertions = [
-      {
-        assertion = false;
-        message = "rms-lab: supply verified target hardware, filesystems and bootloader in nix/hosts/rms-lab/hardware.nix before building/installing the system.";
-      }
-    ];
-  };
+      boot.initrd.availableKernelModules = [
+        "nvme"
+        "xhci_pci"
+        "thunderbolt"
+        "usb_storage"
+        "usbhid"
+        "sd_mod"
+      ];
+      boot.initrd.kernelModules = [ ];
+      boot.kernelModules = [ "kvm-amd" ];
+      boot.extraModulePackages = [ ];
+
+      nixpkgs.hostPlatform = "x86_64-linux";
+      hardware.cpu.amd.updateMicrocode = true;
+      hardware.enableRedistributableFirmware = true;
+    };
 }
