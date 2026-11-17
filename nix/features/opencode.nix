@@ -38,6 +38,15 @@
             type = "remote";
             url = "https://www.superlogical.com/rex/community-mcp";
           };
+          shadcn = {
+            type = "local";
+            command = [
+              "npx"
+              "shadcn@latest"
+              "mcp"
+            ];
+            disabled = true;
+          };
         };
         plugins = [
           "@slkiser/opencode-quota"
