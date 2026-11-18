@@ -14,7 +14,6 @@
       };
 
       config = {
-        services.opencodeServer.enable = laptop;
         services.openssh.enable = laptop;
         services.tailscale.enable = laptop;
         services.fprintd.enable = laptop;
@@ -47,7 +46,6 @@
         self.nixosModules.frameworkHardware
         self.nixosModules.hyprland
         self.nixosModules.tailscale
-        self.nixosModules.opencodeServer
         self.nixosModules._1password
         self.nixosModules.localsend
         self.nixosModules.openlogi
