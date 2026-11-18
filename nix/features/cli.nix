@@ -210,6 +210,8 @@
             gh-stack
             gh-poi
           ];
+          gitCredentialHelper.enable = false;
+          settings.git_protocol = "ssh";
         };
         gh-dash = {
           enable = true;
