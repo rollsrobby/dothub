@@ -1,8 +1,9 @@
-{ self, ... }:
+{ self,  ... }:
 {
   flake.homeModules.cli =
     {
       pkgs,
+      config,
       ...
     }:
     let
@@ -67,12 +68,11 @@
         "...." = "cd ../..";
         "......" = "cd ../../..";
         grep = "grep --color=auto";
-        cat = "bat";
-        ll = "eza --icons --git --long --all";
-        ls = "eza --icons --git --long";
+        cat = "${pkgs.bat}/bin/bat";
+        ll = "${pkgs.eza}/bin/eza --icons --git --long --all";
+        ls = "${pkgs.eza}/bin/eza --icons --git --long";
         ns = "nix-search-tv print | fzf --preview 'nix-search-tv preview {}' --scheme history";
         oc = "opencode .";
-        sml = "tmuxp load ~/.tmuxp/sml.yaml -a";
         tks = "tmux kill-server";
         gs = "gh stack";
       };
@@ -181,7 +181,7 @@
             };
           };
           signing = {
-            key = "~/.ssh/id_ed25519.pub";
+            key = "${config.home.homeDirectory}/.ssh/id_ed25519_signing.pub";
             format = "ssh";
             signByDefault = true;
           };
