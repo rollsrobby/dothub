@@ -27,7 +27,7 @@
       networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 22 ];
       services.openssh = {
         enable = true;
-        openFirewall = true;
+        openFirewall = false;
         settings = {
           PasswordAuthentication = false;
           KbdInteractiveAuthentication = false;
