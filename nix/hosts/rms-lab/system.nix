@@ -36,6 +36,7 @@
       };
       programs.ssh.startAgent = true;
       programs.nix-ld.enable = true;
+      programs._1password.enable = true;
       virtualisation.podman = {
         enable = true;
         dockerCompat = true;
@@ -49,6 +50,7 @@
       services.opencodeServer.enable = true;
       home-manager.users.rms = self.homeModules.rmsLab;
       system.stateVersion = "26.05";
+      services.fwupd.enable =  true;
 
       boot.loader.systemd-boot.enable = true;
       boot.loader.systemd-boot.configurationLimit = 10;
